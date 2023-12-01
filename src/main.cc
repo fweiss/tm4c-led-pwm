@@ -25,6 +25,37 @@ static void delay(void) {
     }
 }
 
+constexpr uint32_t PortF = 0x4005D000;
+template<uint32_t Port>
+class GPIOx {
+public:
+    GPIOx(uint32_t _pin) : pin(_pin) {}
+    GPIOx& operator=(uint32_t value) {
+        *(volatile uint32_t*)(data + (pin << 2)) = value;
+        return *this;
+    }
+    operator uint32_t() const {
+        return *(volatile uint32_t*)(data + (pin << 2));
+    }
+private:
+    const uint32_t pin;
+    static constexpr uint32_t base = Port + 0x000;
+    static constexpr uint32_t data = base + 0x000;
+    static constexpr uint32_t dir = base + 0x400;
+    static constexpr uint32_t afsel = base + 0x420;
+    static constexpr uint32_t pur = base + 0x510;
+    static constexpr uint32_t pdr = base + 0x514;
+    static constexpr uint32_t den = base + 0x51C;
+    static constexpr uint32_t lock = base + 0x520;
+    static constexpr uint32_t cr = base + 0x524;
+    static constexpr uint32_t amsel = base + 0x528;
+    static constexpr uint32_t pctl = base + 0x52C;
+    static constexpr uint32_t dr2r = base + 0x500;
+    static constexpr uint32_t dr4r = base + 0x504;
+    static constexpr uint32_t dr8r = base + 0x508;
+    static constexpr uint32_t odr = base + 0x50C;
+};
+
 int main(void) {
     struct X {
         struct portf {
@@ -43,17 +74,25 @@ int main(void) {
 
     P p;
 
+    GPIOx<PortF> redLed(0x02);
+    GPIOx<PortF> blueLed(0x04);
+
     while (true) {
         gpio_set(RGB_PORT, LED_B);
+        uint8_t blue = blueLed;
+        redLed = (blue ? 0 : 0x02);
 
-        // const uint32_t port_f_ahb_data_base = 0x4005D000 + 0x000 + 0x001;
-        // *(volatile uint32_t*)(0x4005D000 + 0x000 + 0x010) = 0x04;
-        ((volatile uint32_t*)(0x4005D000 + 0x000))[0x02] = 0x02;
-        X.portf.gpio1 = 0xcc;
+        // ((volatile uint32_t*)(0x4005D000 + 0x000))[0x02] = 0x02;
+        // X.portf.gpio1 = 0xcc;
 
-        // p.setLed(0x01);
+         // p.setLed(0x01);
 		delay(); /* Wait a bit. */
+
+
 		gpio_clear(RGB_PORT, LED_B);
+
+        uint8_t blue2 = blueLed;
+        redLed = (blue2 ? 0 : 0x02);
 
         // *(volatile uint32_t*)(0x4005D000 + 0x000 + 0x0e0) = 0x00;
 

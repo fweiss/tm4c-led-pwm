@@ -20,8 +20,8 @@ public:
         // GPIODEN enable digital
         // no interrupts
 
-        const uint32_t port_f_ahb_direction_base = 0x4005D000 + 0x400;
-        const uint32_t port_f_ahb_data_base = 0x4005D000 + 0x000;
+        // const uint32_t port_f_ahb_direction_base = 0x4005D000 + 0x400;
+        // const uint32_t port_f_ahb_data_base = 0x4005D000 + 0x000;
     }
     void setLed(uint8_t value) {
         // synchronous?
