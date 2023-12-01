@@ -1,6 +1,8 @@
 #include <libopencm3/lm4f/rcc.h>
 #include <libopencm3/lm4f/gpio.h>
 
+#include "P.h"
+
 enum {
 	PLL_DIV_80MHZ 	= 5,
 	PLL_DIV_57MHZ 	= 7,
@@ -16,7 +18,7 @@ enum {
 	LED_B	= GPIO2,
 };
 
-const int FLASH_DELAY = 1000000;
+const int FLASH_DELAY = 8000000;
 static void delay(void) {
 	for (int i = 0; i < FLASH_DELAY; i++) {
 		__asm__("nop");
@@ -24,6 +26,13 @@ static void delay(void) {
 }
 
 int main(void) {
+    struct X {
+        struct portf {
+            uint32_t *data = (uint32_t*)(0x4005D000 + 0x000);
+            volatile uint32_t &gpio1 = data[0x1];
+        } portf;
+    } X;
+
 	gpio_enable_ahb_aperture();
 	rcc_sysclk_config(OSCSRC_MOSC, XTAL_16M, PLL_DIV_80MHZ);
 
@@ -32,10 +41,23 @@ int main(void) {
 	gpio_mode_setup(RGB_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, outpins);
 	gpio_set_output_config(RGB_PORT, GPIO_OTYPE_PP, GPIO_DRIVE_2MA, outpins);
 
+    P p;
+
     while (true) {
-        gpio_set(RGB_PORT, LED_G);
+        gpio_set(RGB_PORT, LED_B);
+
+        // const uint32_t port_f_ahb_data_base = 0x4005D000 + 0x000 + 0x001;
+        // *(volatile uint32_t*)(0x4005D000 + 0x000 + 0x010) = 0x04;
+        ((volatile uint32_t*)(0x4005D000 + 0x000))[0x02] = 0x02;
+        X.portf.gpio1 = 0xcc;
+
+        // p.setLed(0x01);
 		delay(); /* Wait a bit. */
-		gpio_clear(RGB_PORT, LED_G);
+		gpio_clear(RGB_PORT, LED_B);
+
+        // *(volatile uint32_t*)(0x4005D000 + 0x000 + 0x0e0) = 0x00;
+
+        // p.setLed(0x00);
 		delay(); /* Wait a bit. */
     }
 
