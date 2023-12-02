@@ -19,6 +19,7 @@ enum {
 };
 
 const int FLASH_DELAY = 8000000;
+__attribute__((noinline))
 static void delay(void) {
 	for (int i = 0; i < FLASH_DELAY; i++) {
 		__asm__("nop");
@@ -45,10 +46,17 @@ int main(void) {
     GPIOx<PortF> blueLed(Pin::_2);
     GPIOx<PortF> greenLed(Pin::_3);
 
+    // redLed = true;
+
+    GPIOx<PortF> &mainLed = redLed;
+
     while (true) {
-        gpio_set(RGB_PORT, LED_B);
-        uint8_t blue = blueLed;
-        greenLed = (blue ? 0 : static_cast<int>(Pin::_3));
+        // gpio_set(RGB_PORT, LED_B);
+        mainLed = true;
+
+        // bool blue = blueLed;
+        // // greenLed = (blue ? 0 : static_cast<uint32_t>(Pin::_3));
+        // greenLed = !blue;
 
         // ((volatile uint32_t*)(0x4005D000 + 0x000))[0x02] = 0x02;
         // X.portf.gpio1 = 0xcc;
@@ -57,10 +65,12 @@ int main(void) {
 		delay(); /* Wait a bit. */
 
 
-		gpio_clear(RGB_PORT, LED_B);
+		// gpio_clear(RGB_PORT, LED_B);
+        mainLed = false;
 
-        uint8_t blue2 = blueLed;
-        greenLed = (blue2 ? 0 : static_cast<int>(Pin::_3));
+        // bool blue2 = blueLed;
+        // // greenLed = (blue2 ? 0 : static_cast<uint32_t>(Pin::_3));
+        // greenLed = !blue2;
 
         // *(volatile uint32_t*)(0x4005D000 + 0x000 + 0x0e0) = 0x00;
 

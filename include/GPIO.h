@@ -25,15 +25,25 @@ template<uint32_t Port>
 class GPIOx {
 public:
     GPIOx(Pin _pin) : pin(_pin) {}
-    GPIOx& operator=(uint32_t value) {
-        *(volatile uint32_t*)(data + (static_cast<uint32_t>(pin) << 2)) = value;
+    // GPIOx& operator=(uint32_t value) {
+    //     *(volatile uint32_t*)(data + (pinNumber() << 2)) = value;
+    //     return *this;
+    // }
+    GPIOx& operator=(bool onOff) {
+        *(volatile uint32_t*)(data + (pinNumber() << 2)) = onOff ? 0xff : 0x00;
         return *this;
     }
-    operator uint32_t() const {
-        return *(volatile uint32_t*)(data + (static_cast<uint32_t>(pin) << 2));
+    // operator uint32_t() const {
+    //     return *(volatile uint32_t*)(data + (static_cast<uint32_t>(pin) << 2));
+    // }
+    operator bool() const {
+        return *(volatile uint32_t*)(data + (pinNumber() << 2)) != 0;
     }
 private:
     const Pin pin;
+    uint8_t pinNumber() const {
+        return static_cast<uint8_t>(pin);
+    }
     static constexpr uint32_t base = Port + 0x000;
     static constexpr uint32_t data = base + 0x000;
     static constexpr uint32_t dir = base + 0x400;
