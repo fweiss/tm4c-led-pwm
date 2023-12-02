@@ -27,13 +27,6 @@ static void delay(void) {
 }
 
 int main(void) {
-    struct X {
-        struct portf {
-            uint32_t *data = (uint32_t*)(0x4005D000 + 0x000);
-            volatile uint32_t &gpio1 = data[0x1];
-        } portf;
-    } X;
-
 	gpio_enable_ahb_aperture();
 	rcc_sysclk_config(OSCSRC_MOSC, XTAL_16M, PLL_DIV_80MHZ);
 
@@ -48,34 +41,13 @@ int main(void) {
 
     // redLed = true;
 
-    GPIOx<PortF> &mainLed = redLed;
+    GPIOx<PortF> &mainLed = greenLed;
 
     while (true) {
-        // gpio_set(RGB_PORT, LED_B);
         mainLed = true;
-
-        // bool blue = blueLed;
-        // // greenLed = (blue ? 0 : static_cast<uint32_t>(Pin::_3));
-        // greenLed = !blue;
-
-        // ((volatile uint32_t*)(0x4005D000 + 0x000))[0x02] = 0x02;
-        // X.portf.gpio1 = 0xcc;
-
-         // p.setLed(0x01);
-		delay(); /* Wait a bit. */
-
-
-		// gpio_clear(RGB_PORT, LED_B);
+		delay();
         mainLed = false;
-
-        // bool blue2 = blueLed;
-        // // greenLed = (blue2 ? 0 : static_cast<uint32_t>(Pin::_3));
-        // greenLed = !blue2;
-
-        // *(volatile uint32_t*)(0x4005D000 + 0x000 + 0x0e0) = 0x00;
-
-        // p.setLed(0x00);
-		delay(); /* Wait a bit. */
+		delay();
     }
 
     return 0;
