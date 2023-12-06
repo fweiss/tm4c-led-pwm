@@ -31,17 +31,19 @@ int main(void) {
 	rcc_sysclk_config(OSCSRC_MOSC, XTAL_16M, PLL_DIV_80MHZ);
 
     periph_clock_enable(RCC_GPIOF);
+    // PortFx.enableClock();
+
 	const uint32_t outpins = (LED_R | LED_G | LED_B);
 	gpio_mode_setup(RGB_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, outpins);
 	gpio_set_output_config(RGB_PORT, GPIO_OTYPE_PP, GPIO_DRIVE_2MA, outpins);
 
-    GPIOx<PortF> redLed(Pin::_1);
-    GPIOx<PortF> blueLed(Pin::_2);
-    GPIOx<PortF> greenLed(Pin::_3);
+    GPIOx<PortFx> redLed(Pin::_1);
+    GPIOx<PortFx> blueLed(Pin::_2);
+    GPIOx<PortFx> greenLed(Pin::_3);
 
     // redLed = true;
 
-    GPIOx<PortF> &mainLed = greenLed;
+    GPIOx<PortF> &mainLed = redLed;
 
     while (true) {
         mainLed = true;
