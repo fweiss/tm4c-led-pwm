@@ -46,7 +46,7 @@ class zGPIO {
     const uint32_t pin;
     const uint32_t data = base;
 public:
-    zGPIO(zPort& port, uint32_t pin) : base(port.base), pin(pin) {}
+    zGPIO(zPort& port, uint32_t pin_) : base(port.base), pin(pin_) {}
     zGPIO & operator=(bool onOff) {
         *(volatile uint32_t*)(data + (pin << 2)) = onOff ? 0xff : 0x00;
         return *this;
@@ -101,7 +101,7 @@ enum class Pin {
 };
 
 constexpr uint32_t PortF = 0x4005D000;
-constexpr uint32_t PortFx = 0x4005D000;
+// constexpr uint32_t PortFx = 0x4005D000;
 
 class PortInfo {
     public:
@@ -114,22 +114,24 @@ class PortInfo {
 // each gpio port has a base address, either abp or ahp
 // currently, abp ignored, ahp used
 // somne ports have restrictions on which pins can be used
-template <uint8_t Index, uint32_t gpioPortBase>
-class Porty : public PortInfo {
+// template <uint8_t Index, uint32_t gpioPortBase>
+class Porty {
 public:
-    Porty() : PortInfo(gpioPortBase) {}
+    Porty(uint32_t index_, uint32_t gpioPortBase_) : index(index_), gpioPortBase(gpioPortBase_) {}
     // these are for GPIO module
     // other modules may have different registers, CAN, Timer, I2C, ...
-    static void enableClock() {
-        *(volatile uint32_t*)(RCGCGPIO) |= (1 << Index);
+    void enableClock() {
+        *(volatile uint32_t*)(RCGCGPIO) |= (1 << index);
         // delay 3 system clock cycles
     }
-    static void disableClock() {
-        *(volatile uint32_t*)(RCGCGPIO) &= ~(1 << Index);
+    void disableClock() {
+        *(volatile uint32_t*)(RCGCGPIO) &= ~(1 << index);
     }
-    static constexpr uint32_t base = 0x400FE000; // system control base
+    const uint32_t index;
+    const uint32_t base = 0x400FE000; // system control base
+    const uint32_t gpioPortBase;
     // abp base and ahp base
-    static constexpr uint32_t RCGCGPIO = base + 0x608; // General-Purpose Input/Output Run Mode Clock Gating Control
+    const uint32_t RCGCGPIO = base + 0x608; // General-Purpose Input/Output Run Mode Clock Gating Control
     // 0x508 General-Purpose Input/Output Software Reset (SRGPIO)
     // General-Purpose Input/Output Peripheral Present (PPGPIO), offset 0x308
     // GPIO High-Performance Bus Control (GPIOHBCTL), offset 0x06C
@@ -141,10 +143,9 @@ public:
 
 // use this template to define a gpio pin
 // template<class port>
-template <uint32_t gpioPortBase>
 class GPIOx {
 public:
-    GPIOx(Pin _pin) : pin(_pin) {}
+    GPIOx(Porty &port, Pin _pin) : base(port.gpioPortBase), pin(_pin) {}
     // GPIOx& operator=(uint32_t value) {
     //     *(volatile uint32_t*)(data + (pinNumber() << 2)) = value;
     //     return *this;
@@ -160,23 +161,23 @@ public:
         return *(volatile uint32_t*)(data + (pinNumber() << 2)) != 0;
     }
 private:
+    const uint32_t base;
     const Pin pin;
     uint8_t pinNumber() const {
         return static_cast<uint8_t>(pin);
     }
-    static constexpr uint32_t base = 0x4005D000 + 0x000;
-    static constexpr uint32_t data = base + 0x000;
-    static constexpr uint32_t dir = base + 0x400;
-    static constexpr uint32_t afsel = base + 0x420;
-    static constexpr uint32_t pur = base + 0x510;
-    static constexpr uint32_t pdr = base + 0x514;
-    static constexpr uint32_t den = base + 0x51C;
-    static constexpr uint32_t lock = base + 0x520;
-    static constexpr uint32_t cr = base + 0x524;
-    static constexpr uint32_t amsel = base + 0x528;
-    static constexpr uint32_t pctl = base + 0x52C;
-    static constexpr uint32_t dr2r = base + 0x500;
-    static constexpr uint32_t dr4r = base + 0x504;
-    static constexpr uint32_t dr8r = base + 0x508;
-    static constexpr uint32_t odr = base + 0x50C;
+    const uint32_t data = base + 0x000;
+    const uint32_t dir = base + 0x400;
+    const uint32_t afsel = base + 0x420;
+    const uint32_t pur = base + 0x510;
+    const uint32_t pdr = base + 0x514;
+    const uint32_t den = base + 0x51C;
+    const uint32_t lock = base + 0x520;
+    const uint32_t cr = base + 0x524;
+    const uint32_t amsel = base + 0x528;
+    const uint32_t pctl = base + 0x52C;
+    const uint32_t dr2r = base + 0x500;
+    const uint32_t dr4r = base + 0x504;
+    const uint32_t dr8r = base + 0x508;
+    const uint32_t odr = base + 0x50C;
 };

@@ -27,23 +27,25 @@ static void delay(void) {
 }
 
 int main(void) {
+    Porty PortFx(5, 0x4005D000);
+
 	gpio_enable_ahb_aperture();
 	rcc_sysclk_config(OSCSRC_MOSC, XTAL_16M, PLL_DIV_80MHZ);
 
-    periph_clock_enable(RCC_GPIOF);
-    // PortFx.enableClock();
+    // periph_clock_enable(RCC_GPIOF);
+    PortFx.enableClock();
 
 	const uint32_t outpins = (LED_R | LED_G | LED_B);
 	gpio_mode_setup(RGB_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, outpins);
 	gpio_set_output_config(RGB_PORT, GPIO_OTYPE_PP, GPIO_DRIVE_2MA, outpins);
 
-    GPIOx<PortFx> redLed(Pin::_1);
-    GPIOx<PortFx> blueLed(Pin::_2);
-    GPIOx<PortFx> greenLed(Pin::_3);
+    GPIOx redLed(PortFx, Pin::_1);
+    GPIOx blueLed(PortFx, Pin::_2);
+    GPIOx greenLed(PortFx, Pin::_3);
 
     // redLed = true;
 
-    GPIOx<PortF> &mainLed = redLed;
+    GPIOx &mainLed = greenLed;
 
     while (true) {
         mainLed = true;
