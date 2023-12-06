@@ -45,7 +45,7 @@ int main(void) {
 
     // redLed = true;
 
-    GPIOx &mainLed = greenLed;
+    GPIOx &mainLed = redLed;
 
     while (true) {
         mainLed = true;
