@@ -38,6 +38,9 @@ public:
     void disableClock() {
         *(volatile uint32_t*)(RCGCGPIO) &= ~(1 << index);
     }
+    void enableHighPerformanceBus() {
+        *(volatile uint32_t*)(GPIOHBCTL) |= (1 << index);
+    }
     const uint32_t index;
     const uint32_t base = 0x400FE000; // system control base
     const uint32_t gpioPortBase;
@@ -45,7 +48,7 @@ public:
     const uint32_t RCGCGPIO = base + 0x608; // General-Purpose Input/Output Run Mode Clock Gating Control
     // 0x508 General-Purpose Input/Output Software Reset (SRGPIO)
     // General-Purpose Input/Output Peripheral Present (PPGPIO), offset 0x308
-    // GPIO High-Performance Bus Control (GPIOHBCTL), offset 0x06C
+    const uint32_t GPIOHBCTL = base + 0x06C; // GPIO High-Performance Bus Control
 };
 
 // define the ports

@@ -27,9 +27,11 @@ static void delay(void) {
 }
 
 int main(void) {
+    // fixme move to header file
     Porty PortFx(5, 0x4005D000);
 
-	gpio_enable_ahb_aperture();
+	// fixme AHB is linked to the gpio base address
+    PortFx.enableHighPerformanceBus();
 	rcc_sysclk_config(OSCSRC_MOSC, XTAL_16M, PLL_DIV_80MHZ);
 
     // periph_clock_enable(RCC_GPIOF);
