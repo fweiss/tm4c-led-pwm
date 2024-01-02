@@ -2,6 +2,8 @@
 #include <libopencm3/lm4f/gpio.h>
 
 #include "GPIO.h"
+#include "pwm-timer.h"
+// #include "pwm.h"
 
 enum {
 	PLL_DIV_80MHZ 	= 5,
@@ -27,32 +29,57 @@ static void delay(void) {
 }
 
 int main(void) {
+	Clock clocks;
+	// Clock::waitForMasterOscillator();
+	// rcc_sysclk_config(OSCSRC_MOSC, XTAL_16M, PLL_DIV_80MHZ);
+	clocks.blinkClockSetup();
+
     // fixme move to header file
-    Porty PortFx(5, 0x4005D000);
+    Port port(5, 0x4005D000);
 
 	// fixme AHB is linked to the gpio base address
-    PortFx.enableHighPerformanceBus();
-	rcc_sysclk_config(OSCSRC_MOSC, XTAL_16M, PLL_DIV_80MHZ);
+    port.enableHighPerformanceBus();
 
     // periph_clock_enable(RCC_GPIOF);
-    PortFx.enableClock();
+    port.enableClock();
+	// require 3 system clock delay after peripheral clock enable
+	__asm__("nop");
+	__asm__("nop");
+	__asm__("nop");
 
 	const uint32_t outpins = (LED_R | LED_G | LED_B);
 	gpio_mode_setup(RGB_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, outpins);
 	gpio_set_output_config(RGB_PORT, GPIO_OTYPE_PP, GPIO_DRIVE_2MA, outpins);
+	
+	DigitalPin redLed(port, port.pin1);
+    DigitalPin blueLed(port, port.pin2);
+    DigitalPin greenLed(port, port.pin3);
 
-    GPIOx redLed(PortFx, Pin::_1);
-    GPIOx blueLed(PortFx, Pin::_2);
-    GPIOx greenLed(PortFx, Pin::_3);
+	auto &timerBlock1 = TimerBlocks::block1;
+	timerBlock1.clockEnable = true; // todo delay
+	// timerBlock.configure = timerBlock.configure.TIMER_16_BIT;
+	timerBlock1.configuration = 4;
 
-    // redLed = true;
+	// r = PF1 T0CCP1
+	// b = PF2 T1CCP0
+	// g = PF3 T1CCP1
 
-    GPIOx &mainLed = redLed;
+	// block 0 and 1, timer 1 experiment
+	// flash blue dim red/green
+    // DigitalPin &mainLed = blueLed;
+	// setupPwm(TimerBlocks::timer0, redLed);
+	// setupPwm(TimerBlocks::timer1, greenLed);
+
+	// block 1 timer 0 experiment
+	// flash red dim green/blue
+    DigitalPin &mainLed = redLed;
+	// setupPwm(TimerBlocks::timer1, greenLed);
+	setupPwm(timerBlock1, blueLed);
 
     while (true) {
-        mainLed = true;
+		mainLed = true;
 		delay();
-        mainLed = false;
+		mainLed = false;
 		delay();
     }
 
