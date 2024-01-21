@@ -262,15 +262,23 @@ private:
 
 };
 
+enum class TimerBlockIndex {
+    Block0, Block1, Block2, Block3, Block4, Block5
+};
+
 // Three classes of timer registers
 // - global, bit per timer block - RCGCTIMER
 // - per timer block - GPTMCFG, GPTMCTL[A,B]
 // - per timer - GPTMTAMR, GPTMTBMR
-template<uint32_t blockBaseAddress, uint8_t blockIndex>
+template<TimerBlockIndex blockIndex>
 struct TimerBlock : public RegisterAccess {
-    static const uint32_t systemControlBaseAddress = 0x400FE000;
+    // setup base addresses
+    static constexpr uint32_t timerModuleBaseAddress = 0x40030000;
+    static constexpr uint32_t blockAddressOffset = static_cast<uint32_t>(blockIndex) * 0x1000;
+    static constexpr uint32_t blockBaseAddress = timerModuleBaseAddress + blockAddressOffset;
+    static constexpr uint32_t systemControlBaseAddress = 0x400FE000;
 
-    RegisterBit<systemControlBaseAddress + 0x604, blockIndex> clockEnable; // RCGCTIMER
+    RegisterBit<systemControlBaseAddress + 0x604, static_cast<uint8_t>(blockIndex)> clockEnable; // RCGCTIMER
     RegisterMasked<blockBaseAddress, 0, 3> configuration; // GPTMCFG
 
     // template for A/B timer API
@@ -299,18 +307,30 @@ struct TimerBlock : public RegisterAccess {
         }
     };
 
-    static Timer<0> timerA;
-    static Timer<1> timerB;
+    Timer<0> timerA;
+    Timer<1> timerB;
 };
 // wish there was a DRY ay to do this
 // but heck, that is not exposed in the API
 struct TimerBlocks {
-    static TimerBlock<0x40030000, 0> block0;
-    static TimerBlock<0x40031000, 1> block1;
-    static TimerBlock<0x40032000, 2> block2;
-    static TimerBlock<0x40033000, 3> block3;
-    static TimerBlock<0x40034000, 4> block4;
-    static TimerBlock<0x40035000, 5> block5;
+    // static TimerBlock<0x40030000, 0> block0;
+    // static TimerBlock<0x40031000, 1> block1;
+    // static TimerBlock<0x40032000, 2> block2;
+    // static TimerBlock<0x40033000, 3> block3;
+    // static TimerBlock<0x40034000, 4> block4;
+    // static TimerBlock<0x40035000, 5> block5;
+
+    static TimerBlock<TimerBlockIndex::Block0> block0;
+    static TimerBlock<TimerBlockIndex::Block1> block1;
+    static TimerBlock<TimerBlockIndex::Block2> block2;
+    static TimerBlock<TimerBlockIndex::Block3> block3;
+    static TimerBlock<TimerBlockIndex::Block4> block4;
+    static TimerBlock<TimerBlockIndex::Block5> block5;
+
 };
-TimerBlock<0x40030000, 0> TimerBlocks::block0;
-TimerBlock<0x40031000, 1> TimerBlocks::block1;
+TimerBlock<TimerBlockIndex::Block0> TimerBlocks::block0;
+TimerBlock<TimerBlockIndex::Block1> TimerBlocks::block1;
+
+// for passing Timer to a function template, use template alias
+template<TimerBlockIndex timerBlockIndex, uint8_t timerIndex>
+using TimerBlockTimer = TimerBlock<timerBlockIndex>::Timer<timerIndex>;

@@ -73,8 +73,8 @@ int main(void) {
 	// block 1 timer 0 experiment
 	// flash red dim green/blue
     DigitalPin &mainLed = redLed;
-	// setupPwm(TimerBlocks::timer1, greenLed);
-	setupPwm(timerBlock1, blueLed);
+	// setupPwm(timerBlock1.timerB, greenLed);
+	setupPwm(timerBlock1.timerA, blueLed);
 
     while (true) {
 		mainLed = true;

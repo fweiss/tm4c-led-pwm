@@ -17,31 +17,27 @@ static void delay(uint32_t cycles) {
 // g = F2 T1CCP0
 // b = F3 T1CCP1
 // todo check if this causes specialization of the function
-template<uint32_t blockBaseAddress, uint8_t blockIndex>
-void setupPwm(TimerBlock<blockBaseAddress, blockIndex> &timerBlock, DigitalPin &pin) {
+template<TimerBlockIndex timerBlockIndex, uint8_t timerIndex>
+void setupPwm(TimerBlockTimer<timerBlockIndex, timerIndex> &timer, DigitalPin &pin) {
 
-	// timerBlock.clockEnable = true;
-	// delay(3);
-
-	auto &timer = timerBlock.timerA;
+	// auto &timer = timerBlock.timerB;
 	timer.enable = false;
-delay(7); // empirically need at least 7
-
+	delay(7); // empirically need at least 7 ?
 	timer.setPwmMode(); //TAAMS, TACMR, TAMR
-
 	timer.invertOutput = true; // debug
-	// GPTMTnPR if used prescaler
+
 	timer.intervalPrescale = 255; // 8-bit or 16-bit
+	timer.interval = 65535; // 16-bit
 	timer.matchPrescale = 127; // 8-bit or 16-bit
+	timer.match = 65535;
+
 	// GPTMCTL.TnEVENT if interrupts are used
 	// GPTMTnMR.TnPWMIE
 	// portf.pin1.driveSelect = 2, 4, 8 GPIODR8R - done in main()
 
-	timer.interval = 65535; // 16-bit
-	timer.match = 65535;
-
 	pin.enableAlternateFunction = true;
-	pin.portControl = 7;
+	const uint8_t digitalFunctionTimerCCP = 7;
+	pin.portControl = digitalFunctionTimerCCP;
 	
 	timer.enable = true;
 	// GPTMTnILR to change period
