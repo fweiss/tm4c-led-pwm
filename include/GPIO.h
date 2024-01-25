@@ -105,160 +105,175 @@ struct Clock : RegisterAccess {
     // }
 };
 
+enum class PortIndex : uint32_t {
+    PortA = 0,
+    PortB = 1,
+    PortC = 2,
+    PortD = 3,
+    PortE = 4,
+    PortF = 5,
+};
+
 // use this template to define a port
 // each gpio port has an index 0-5
 // each gpio port has a base address, either abp or ahp
 // currently, abp ignored, ahp used
 // somne ports have restrictions on which pins can be used
 // template <uint8_t Index, uint32_t gpioPortBase>
-class Port {
-public:
+template<PortIndex portIndex>
+struct Port {
+    static constexpr uint32_t portAddressStride = 0x1000;
+    static constexpr uint32_t gpioPortBase = 0x40058000 + static_cast<uint32_t>(portIndex) * portAddressStride;
+
     Port(uint32_t index_, uint32_t gpioPortBase_) : 
-        index(index_), 
-        gpioPortBase(gpioPortBase_),
-        pin1(PinIndex::_1),
-        pin2(PinIndex::_2),
-        pin3(PinIndex::_3)
+        index(static_cast<uint32_t>(portIndex))
+        // pin1(DigitalPin<PinIndex::_1>),
+        // pin2(PinIndex::_2),
+        // pin3(PinIndex::_3)
     {}
     // these are for GPIO module
     // other modules may have different registers, CAN, TimerBlock, I2C, ...
     void enableClock() {
-        *(volatile uint32_t*)(RCGCGPIO) |= (1 << index);
-        // delay 3 system clock cycles
+    *(volatile uint32_t*)(RCGCGPIO) |= (1 << index);
+    // delay 3 system clock cycles
     }
     void disableClock() {
-        *(volatile uint32_t*)(RCGCGPIO) &= ~(1 << index);
+    *(volatile uint32_t*)(RCGCGPIO) &= ~(1 << index);
     }
-        void enableHighPerformanceBus() {
+    void enableHighPerformanceBus() {
         *(volatile uint32_t*)(GPIOHBCTL) |= (1 << index);
     }
 
     const uint32_t index;
     const uint32_t base = 0x400FE000; // system control base
-    const uint32_t gpioPortBase;
+    // const uint32_t gpioPortBase;
     // abp base and ahp base
     const uint32_t RCGCGPIO = base + 0x608; // General-Purpose Input/Output Run Mode Clock Gating Control
     // 0x508 General-Purpose Input/Output Software Reset (SRGPIO)
     // General-Purpose Input/Output Peripheral Present (PPGPIO), offset 0x308
     const uint32_t GPIOHBCTL = base + 0x06C; // GPIO High-Performance Bus Control
 
-    const PinIndex pin1;
-    const PinIndex pin2;
-    const PinIndex pin3;
-
-};
-
-class DigitalPin {
-public:
-    DigitalPin(Port &port, PinIndex _pin) : 
-        base(port.gpioPortBase), 
-        pin(_pin),
-        enableAlternateFunction(base, pin),
-        portControl(base, pin)
-    {}
-    // DigitalPin& operator=(uint32_t value) {
-    //     *(volatile uint32_t*)(data + (pinNumber() << 2)) = value;
-    //     return *this;
-    // }
-    // operator uint32_t() const {
-    //     return *(volatile uint32_t*)(data + (static_cast<uint32_t>(pin) << 2));
-    // }
-    DigitalPin& operator=(bool onOff) {
-        *(volatile uint32_t*)(data + (pinNumber() << 2)) = onOff ? 0xff : 0x00;
-        return *this;
-    }
-    operator bool() const {
-        return *(volatile uint32_t*)(data + (pinNumber() << 2)) != 0;
-    }
-    // type of enable pin buts in lower 8 bits
-    struct EnableAlternateFunction  : public RegisterAccess {
-        EnableAlternateFunction(uint32_t base_, PinIndex pin_) : 
-            xbase(base_),
-            xpin(pin_)
+    // fixme use enum class
+    template<PinIndex pinIndex>
+    struct DigitalPin {
+    public:
+        DigitalPin() : 
+            base(gpioPortBase), // from enclosing class
+            pin(pinIndex),
+            enableAlternateFunction(base, pin),
+            portControl(base, pin)
         {}
-        uint32_t xbase;
-        PinIndex xpin;
-        void operator=(bool onoff) {
-            // uint32_t registerAddress = 0x4005D000 + 0x420; // GPIOAFSEL
-            if (onoff) {
-                setbits(xbase + 0x420, static_cast<uint8_t>(xpin)); // pin1
-            } else {
-                clearbits(xbase + 0x420, static_cast<uint8_t>(xpin)); // pin1
+        // DigitalPin& operator=(uint32_t value) {
+        //     *(volatile uint32_t*)(data + (pinNumber() << 2)) = value;
+        //     return *this;
+        // }
+        // operator uint32_t() const {
+        //     return *(volatile uint32_t*)(data + (static_cast<uint32_t>(pin) << 2));
+        // }
+        DigitalPin& operator=(bool onOff) {
+            *(volatile uint32_t*)(data + (pinNumber() << 2)) = onOff ? 0xff : 0x00;
+            return *this;
+        }
+        operator bool() const {
+            return *(volatile uint32_t*)(data + (pinNumber() << 2)) != 0;
+        }
+        // type of enable pin buts in lower 8 bits
+        struct EnableAlternateFunction  : public RegisterAccess {
+            EnableAlternateFunction(uint32_t base_, PinIndex pin_) : 
+                xbase(base_),
+                xpin(pin_)
+            {}
+            uint32_t xbase;
+            PinIndex xpin;
+            void operator=(bool onoff) {
+                // uint32_t registerAddress = 0x4005D000 + 0x420; // GPIOAFSEL
+                if (onoff) {
+                    setbits(xbase + 0x420, static_cast<uint8_t>(xpin)); // pin1
+                } else {
+                    clearbits(xbase + 0x420, static_cast<uint8_t>(xpin)); // pin1
+                }
             }
+        };
+            struct PinPortControl : public RegisterAccess { // GPIOPCTL
+            PinPortControl(uint32_t base_, PinIndex pin_) :
+                xbase(base_),
+                xpin(pin_)
+            {}
+            uint32_t xbase;
+            PinIndex xpin;
+            const uint32_t registerAddress = 0x4005D000 + 0x52c; // depnds on port
+            void operator=(uint8_t peripheralSignal) {
+                // bridge
+                uint8_t pini = __builtin_ctz((uint8_t)xpin);
+
+                uint8_t shift = pini * 4; // depends on pin index (0..7) * 4
+                uint32_t mask = 0x0f << shift;
+                uint32_t shifted = peripheralSignal << shift;
+
+                uint32_t temp = read(registerAddress);
+                temp &= ~ mask; // clear field
+                temp |= (shifted & mask); // set field
+                write(registerAddress, temp);
+            }
+        };
+        const uint32_t base;
+        const PinIndex pin;
+
+        EnableAlternateFunction enableAlternateFunction; // offset 0x420
+        PinPortControl portControl; // offset 0x52c, packed 4 x 8
+    // private:
+        // const uint32_t base;
+        // const PinIndex pin;
+        uint8_t pinNumber() const {
+            return static_cast<uint8_t>(pin);
         }
+        // the following are offsets to various GPIO control registers
+        // belonging to a particular port
+        // in each register, the lower 8 bits correspond to one of
+        // the 8 possible GPIOs in the  port
+        // these bits can be ORed together to set multiple GPIOs
+        const uint32_t data = base + 0x000; // data[7..0] address masking
+        const uint32_t dir = base + 0x400; // bool[7..0]
+        // interrupt sense 404 // bool[7..0]
+        // interrupt both edges 408 // bool[7..0]
+        // interrupt edge 40c // bool[7..0]
+        // interrupt mask 410 // bool[7..0]
+        // raw interrupt 414 // bool[7..0]
+        // masked interrupt 418 // bool[7..0]
+        // interrupt clear 41c // bool[7..0]
+        const uint32_t afsel = base + 0x420; // bool[7..0]
+        // additionally, GPIOPCTL for port sets the peripheral signal
+
+        // drive 2 ma 500 // bool[7..0]
+        // drive 4 ma 504
+        // drive 8 ma 508
+        // open drain 50c
+        const uint32_t dr2r = base + 0x500;
+        const uint32_t dr4r = base + 0x504;
+        const uint32_t dr8r = base + 0x508;
+        const uint32_t odr = base + 0x50C;
+
+        const uint32_t pur = base + 0x510; // pullup bool[7..0]
+        const uint32_t pdr = base + 0x514;
+        const uint32_t den = base + 0x51C; // digital enable
+        const uint32_t lock = base + 0x520; // data[31..0]
+        const uint32_t cr = base + 0x524; //commit lock bool[7..0]
+        const uint32_t amsel = base + 0x528; // analog select bool[7..0]
+        const uint32_t pctl = base + 0x52C; // port control data[4][8]
+        // 530 adc ocntrol bool[7..0]
+        // 534 dma control bool[7..0]
+
+        // fd0 perpheral id data[7..0] et al
+        // feo more
+        // ff0 more
+
     };
-    struct PinPortControl : public RegisterAccess { // GPIOPCTL
-        PinPortControl(uint32_t base_, PinIndex pin_) :
-            xbase(base_),
-            xpin(pin_)
-        {}
-        uint32_t xbase;
-        PinIndex xpin;
-        const uint32_t registerAddress = 0x4005D000 + 0x52c; // depnds on port
-        void operator=(uint8_t peripheralSignal) {
-            // bridge
-            uint8_t pini = __builtin_ctz((uint8_t)xpin);
-
-            uint8_t shift = pini * 4; // depends on pin index (0..7) * 4
-            uint32_t mask = 0x0f << shift;
-            uint32_t shifted = peripheralSignal << shift;
-
-            uint32_t temp = read(registerAddress);
-            temp &= ~ mask; // clear field
-            temp |= (shifted & mask); // set field
-            write(registerAddress, temp);
-        }
-    };
-    const uint32_t base;
-    const PinIndex pin;
-
-    EnableAlternateFunction enableAlternateFunction; // offset 0x420
-    PinPortControl portControl; // offset 0x52c, packed 4 x 8
-private:
-    // const uint32_t base;
-    // const PinIndex pin;
-    uint8_t pinNumber() const {
-        return static_cast<uint8_t>(pin);
-    }
-    // the following are offsets to various GPIO control registers
-    // belonging to a particular port
-    // in each register, the lower 8 bits correspond to one of
-    // the 8 possible GPIOs in the  port
-    // these bits can be ORed together to set multiple GPIOs
-    const uint32_t data = base + 0x000; // data[7..0] address masking
-    const uint32_t dir = base + 0x400; // bool[7..0]
-    // interrupt sense 404 // bool[7..0]
-    // interrupt both edges 408 // bool[7..0]
-    // interrupt edge 40c // bool[7..0]
-    // interrupt mask 410 // bool[7..0]
-    // raw interrupt 414 // bool[7..0]
-    // masked interrupt 418 // bool[7..0]
-    // interrupt clear 41c // bool[7..0]
-    const uint32_t afsel = base + 0x420; // bool[7..0]
-    // additionally, GPIOPCTL for port sets the peripheral signal
-
-    // drive 2 ma 500 // bool[7..0]
-    // drive 4 ma 504
-    // drive 8 ma 508
-    // open drain 50c
-    const uint32_t dr2r = base + 0x500;
-    const uint32_t dr4r = base + 0x504;
-    const uint32_t dr8r = base + 0x508;
-    const uint32_t odr = base + 0x50C;
-
-    const uint32_t pur = base + 0x510; // pullup bool[7..0]
-    const uint32_t pdr = base + 0x514;
-    const uint32_t den = base + 0x51C; // digital enable
-    const uint32_t lock = base + 0x520; // data[31..0]
-    const uint32_t cr = base + 0x524; //commit lock bool[7..0]
-    const uint32_t amsel = base + 0x528; // analog select bool[7..0]
-    const uint32_t pctl = base + 0x52C; // port control data[4][8]
-    // 530 adc ocntrol bool[7..0]
-    // 534 dma control bool[7..0]
-
-    // fd0 perpheral id data[7..0] et al
-    // feo more
-    // ff0 more
+    // const PinIndex pin1;
+    // const PinIndex pin2;
+    // const PinIndex pin3;
+    const DigitalPin<PinIndex::_1> pin1;;
+    const DigitalPin<PinIndex::_2> pin2;
+    const DigitalPin<PinIndex::_3> pin3;
 
 };
 
@@ -334,3 +349,7 @@ TimerBlock<TimerBlockIndex::Block1> TimerBlocks::block1;
 // for passing Timer to a function template, use template alias
 template<TimerBlockIndex timerBlockIndex, uint8_t timerIndex>
 using TimerBlockTimer = TimerBlock<timerBlockIndex>::Timer<timerIndex>;
+
+
+template<PortIndex portIndex, PinIndex pinIndex>
+using PortPin = Port<portIndex>::DigitalPin<pinIndex>;

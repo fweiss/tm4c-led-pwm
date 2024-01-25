@@ -18,7 +18,7 @@ static void delay(uint32_t cycles) {
 // b = F3 T1CCP1
 // todo check if this causes specialization of the function
 template<TimerBlockIndex timerBlockIndex, uint8_t timerIndex>
-void setupPwm(TimerBlockTimer<timerBlockIndex, timerIndex> &timer, DigitalPin &pin) {
+void setupPwm(TimerBlockTimer<timerBlockIndex, timerIndex> &timer) {
 
 	// auto &timer = timerBlock.timerB;
 	timer.enable = false;
@@ -35,9 +35,9 @@ void setupPwm(TimerBlockTimer<timerBlockIndex, timerIndex> &timer, DigitalPin &p
 	// GPTMTnMR.TnPWMIE
 	// portf.pin1.driveSelect = 2, 4, 8 GPIODR8R - done in main()
 
-	pin.enableAlternateFunction = true;
-	const uint8_t digitalFunctionTimerCCP = 7;
-	pin.portControl = digitalFunctionTimerCCP;
+	// pin.enableAlternateFunction = true;
+	// const uint8_t digitalFunctionTimerCCP = 7;
+	// pin.portControl = digitalFunctionTimerCCP;
 	
 	timer.enable = true;
 	// GPTMTnILR to change period
