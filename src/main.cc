@@ -71,14 +71,6 @@ int main(void) {
 	auto &pwmLed = greenLed;
  	auto &timerBlock = TimerBlocks::block1;
 	auto &timer = timerBlock.timerB;
-
-	timerBlock.clockEnable = true; // todo delay
-	// timerBlock.configure = timerBlock.configure.TIMER_16_BIT;
-	timerBlock.configuration = 4;
-	setupPwm(timer);
-	pwmLed.enableAlternateFunction = true;
-	const uint8_t digitalFunctionTimerCCP = 7;
-	pwmLed.portControl = digitalFunctionTimerCCP;
 #endif
 
 #ifdef EXPERIMENT_2
@@ -88,15 +80,15 @@ int main(void) {
 	auto &pwmLed = greenLed;
 	auto &timerBlock = TimerBlocks::block1;
 	auto &timer = timerBlock.timerB;
+#endif
 
 	timerBlock.clockEnable = true; // todo delay
+	// timerBlock.configure = timerBlock.configure.TIMER_16_BIT;
 	timerBlock.configuration = 4;
-	// setupPwm(timerBlock1.timerB, greenLed);
 	setupPwm(timer);
 	pwmLed.enableAlternateFunction = true;
 	const uint8_t digitalFunctionTimerCCP = 7;
 	pwmLed.portControl = digitalFunctionTimerCCP;
-#endif
 
     while (true) {
 		mainLed = true;
