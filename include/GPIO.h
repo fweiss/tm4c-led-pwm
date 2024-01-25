@@ -119,57 +119,33 @@ enum class PortIndex : uint32_t {
 // each gpio port has a base address, either abp or ahp
 // currently, abp ignored, ahp used
 // somne ports have restrictions on which pins can be used
-// template <uint8_t Index, uint32_t gpioPortBase>
-template<PortIndex portIndex>
+template<PortIndex portIndexEnum>
 struct Port {
+    static constexpr uint8_t portIndex = static_cast<uint8_t>(portIndexEnum);
     static constexpr uint32_t portAddressStride = 0x1000;
-    static constexpr uint32_t gpioPortBase = 0x40058000 + static_cast<uint32_t>(portIndex) * portAddressStride;
+    static constexpr uint32_t gpioPortBase = 0x40058000 + portIndex * portAddressStride;
+    static constexpr uint32_t systemControlBase = 0x400FE000;
 
-    Port(uint32_t index_, uint32_t gpioPortBase_) : 
-        index(static_cast<uint32_t>(portIndex))
-        // pin1(DigitalPin<PinIndex::_1>),
-        // pin2(PinIndex::_2),
-        // pin3(PinIndex::_3)
-    {}
-    // these are for GPIO module
-    // other modules may have different registers, CAN, TimerBlock, I2C, ...
-    void enableClock() {
-    *(volatile uint32_t*)(RCGCGPIO) |= (1 << index);
-    // delay 3 system clock cycles
-    }
-    void disableClock() {
-    *(volatile uint32_t*)(RCGCGPIO) &= ~(1 << index);
-    }
-    void enableHighPerformanceBus() {
-        *(volatile uint32_t*)(GPIOHBCTL) |= (1 << index);
-    }
+    RegisterBit<systemControlBase + 0x608, portIndex> clockEnable; // RCGCGPIO
+    RegisterBit<systemControlBase + 0x06C, portIndex> highPerformanceBusEnable; // GPIOHBCTL
 
-    const uint32_t index;
-    const uint32_t base = 0x400FE000; // system control base
-    // const uint32_t gpioPortBase;
-    // abp base and ahp base
-    const uint32_t RCGCGPIO = base + 0x608; // General-Purpose Input/Output Run Mode Clock Gating Control
+    const uint32_t RCGCGPIO = systemControlBase + 0x608; // General-Purpose Input/Output Run Mode Clock Gating Control
     // 0x508 General-Purpose Input/Output Software Reset (SRGPIO)
     // General-Purpose Input/Output Peripheral Present (PPGPIO), offset 0x308
-    const uint32_t GPIOHBCTL = base + 0x06C; // GPIO High-Performance Bus Control
+    const uint32_t GPIOHBCTL = systemControlBase + 0x06C; // GPIO High-Performance Bus Control
 
     // fixme use enum class
     template<PinIndex pinIndex>
     struct DigitalPin {
+        static constexpr uint8_t pinBits = static_cast<uint8_t>(pinIndex);
+        static constexpr uint8_t pinI = __builtin_ctz(pinBits);
     public:
         DigitalPin() : 
             base(gpioPortBase), // from enclosing class
-            pin(pinIndex),
-            enableAlternateFunction(base, pin),
-            portControl(base, pin)
+            pin(pinIndex)
         {}
-        // DigitalPin& operator=(uint32_t value) {
-        //     *(volatile uint32_t*)(data + (pinNumber() << 2)) = value;
-        //     return *this;
-        // }
-        // operator uint32_t() const {
-        //     return *(volatile uint32_t*)(data + (static_cast<uint32_t>(pin) << 2));
-        // }
+
+        // the behavior is simply a bool value
         DigitalPin& operator=(bool onOff) {
             *(volatile uint32_t*)(data + (pinNumber() << 2)) = onOff ? 0xff : 0x00;
             return *this;
@@ -177,53 +153,13 @@ struct Port {
         operator bool() const {
             return *(volatile uint32_t*)(data + (pinNumber() << 2)) != 0;
         }
-        // type of enable pin buts in lower 8 bits
-        struct EnableAlternateFunction  : public RegisterAccess {
-            EnableAlternateFunction(uint32_t base_, PinIndex pin_) : 
-                xbase(base_),
-                xpin(pin_)
-            {}
-            uint32_t xbase;
-            PinIndex xpin;
-            void operator=(bool onoff) {
-                // uint32_t registerAddress = 0x4005D000 + 0x420; // GPIOAFSEL
-                if (onoff) {
-                    setbits(xbase + 0x420, static_cast<uint8_t>(xpin)); // pin1
-                } else {
-                    clearbits(xbase + 0x420, static_cast<uint8_t>(xpin)); // pin1
-                }
-            }
-        };
-            struct PinPortControl : public RegisterAccess { // GPIOPCTL
-            PinPortControl(uint32_t base_, PinIndex pin_) :
-                xbase(base_),
-                xpin(pin_)
-            {}
-            uint32_t xbase;
-            PinIndex xpin;
-            const uint32_t registerAddress = 0x4005D000 + 0x52c; // depnds on port
-            void operator=(uint8_t peripheralSignal) {
-                // bridge
-                uint8_t pini = __builtin_ctz((uint8_t)xpin);
+ 
+        RegisterBit<gpioPortBase + 0x420, pinI> alternateFunctionEnable;
+        RegisterMasked<gpioPortBase + 0x52c, 4 * pinI, 4> portMode;
 
-                uint8_t shift = pini * 4; // depends on pin index (0..7) * 4
-                uint32_t mask = 0x0f << shift;
-                uint32_t shifted = peripheralSignal << shift;
-
-                uint32_t temp = read(registerAddress);
-                temp &= ~ mask; // clear field
-                temp |= (shifted & mask); // set field
-                write(registerAddress, temp);
-            }
-        };
         const uint32_t base;
         const PinIndex pin;
 
-        EnableAlternateFunction enableAlternateFunction; // offset 0x420
-        PinPortControl portControl; // offset 0x52c, packed 4 x 8
-    // private:
-        // const uint32_t base;
-        // const PinIndex pin;
         uint8_t pinNumber() const {
             return static_cast<uint8_t>(pin);
         }
@@ -268,13 +204,10 @@ struct Port {
         // ff0 more
 
     };
-    // const PinIndex pin1;
-    // const PinIndex pin2;
-    // const PinIndex pin3;
+
     const DigitalPin<PinIndex::_1> pin1;;
     const DigitalPin<PinIndex::_2> pin2;
     const DigitalPin<PinIndex::_3> pin3;
-
 };
 
 enum class TimerBlockIndex {
@@ -328,12 +261,6 @@ struct TimerBlock : public RegisterAccess {
 // wish there was a DRY ay to do this
 // but heck, that is not exposed in the API
 struct TimerBlocks {
-    // static TimerBlock<0x40030000, 0> block0;
-    // static TimerBlock<0x40031000, 1> block1;
-    // static TimerBlock<0x40032000, 2> block2;
-    // static TimerBlock<0x40033000, 3> block3;
-    // static TimerBlock<0x40034000, 4> block4;
-    // static TimerBlock<0x40035000, 5> block5;
 
     static TimerBlock<TimerBlockIndex::Block0> block0;
     static TimerBlock<TimerBlockIndex::Block1> block1;
@@ -350,6 +277,6 @@ TimerBlock<TimerBlockIndex::Block1> TimerBlocks::block1;
 template<TimerBlockIndex timerBlockIndex, uint8_t timerIndex>
 using TimerBlockTimer = TimerBlock<timerBlockIndex>::Timer<timerIndex>;
 
-
+// for passing DigialPin to a function
 template<PortIndex portIndex, PinIndex pinIndex>
 using PortPin = Port<portIndex>::DigitalPin<pinIndex>;

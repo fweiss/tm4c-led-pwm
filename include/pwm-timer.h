@@ -34,10 +34,6 @@ void setupPwm(TimerBlockTimer<timerBlockIndex, timerIndex> &timer) {
 	// GPTMCTL.TnEVENT if interrupts are used
 	// GPTMTnMR.TnPWMIE
 	// portf.pin1.driveSelect = 2, 4, 8 GPIODR8R - done in main()
-
-	// pin.enableAlternateFunction = true;
-	// const uint8_t digitalFunctionTimerCCP = 7;
-	// pin.portControl = digitalFunctionTimerCCP;
 	
 	timer.enable = true;
 	// GPTMTnILR to change period

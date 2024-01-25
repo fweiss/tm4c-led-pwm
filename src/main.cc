@@ -34,15 +34,11 @@ int main(void) {
 	// rcc_sysclk_config(OSCSRC_MOSC, XTAL_16M, PLL_DIV_80MHZ);
 	clocks.blinkClockSetup();
 
-    // fixme move to header file
-    // Port port(5, 0x4005D000);
-	Port<PortIndex::PortF> port(1, 2);
+	Port<PortIndex::PortF> port;
 
-	// fixme AHB is linked to the gpio base address
-    port.enableHighPerformanceBus();
-
-    // periph_clock_enable(RCC_GPIOF);
-    port.enableClock();
+	// maybe move to constructor
+    port.highPerformanceBusEnable = true;
+    port.clockEnable = true;
 	// require 3 system clock delay after peripheral clock enable
 	__asm__("nop");
 	__asm__("nop");
@@ -52,9 +48,6 @@ int main(void) {
 	gpio_mode_setup(RGB_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, outpins);
 	gpio_set_output_config(RGB_PORT, GPIO_OTYPE_PP, GPIO_DRIVE_2MA, outpins);
 	
-	// DigitalPin redLed(port, port.pin1);
-    // DigitalPin blueLed(port, port.pin2);
-    // DigitalPin greenLed(port, port.pin3);
 	auto redLed = port.pin1;
 	auto blueLed = port.pin2;
 	auto greenLed = port.pin3;
@@ -86,9 +79,9 @@ int main(void) {
 	// timerBlock.configure = timerBlock.configure.TIMER_16_BIT;
 	timerBlock.configuration = 4;
 	setupPwm(timer);
-	pwmLed.enableAlternateFunction = true;
+	pwmLed.alternateFunctionEnable = true;
 	const uint8_t digitalFunctionTimerCCP = 7;
-	pwmLed.portControl = digitalFunctionTimerCCP;
+	pwmLed.portMode = digitalFunctionTimerCCP;
 
     while (true) {
 		mainLed = true;
