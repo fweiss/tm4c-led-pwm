@@ -55,14 +55,7 @@ enum class PortBase {
 };
 
 enum class PinIndex {
-    _0 = 0x01,
-    _1 = 0x02,
-    _2 = 0x04,
-    _3 = 0x08,
-    _4 = 0x10,
-    _5 = 0x20,
-    _6 = 0x40,
-    _7 = 0x80,
+    Pin0 = 0, Pin1, Pin2, Pin3, Pin4, Pin5, Pin6
 };
 
 // six clocks
@@ -135,34 +128,30 @@ struct Port {
     const uint32_t GPIOHBCTL = systemControlBase + 0x06C; // GPIO High-Performance Bus Control
 
     // fixme use enum class
-    template<PinIndex pinIndex>
+    template<PinIndex pinIndexEnum>
     struct DigitalPin {
-        static constexpr uint8_t pinBits = static_cast<uint8_t>(pinIndex);
-        static constexpr uint8_t pinI = __builtin_ctz(pinBits);
+        static constexpr uint8_t pinIndex = static_cast<uint8_t>(pinIndexEnum);
+        static constexpr uint8_t pinBits = (1 << pinIndex);
     public:
         DigitalPin() : 
-            base(gpioPortBase), // from enclosing class
-            pin(pinIndex)
+            base(gpioPortBase) // from enclosing class
         {}
 
         // the behavior is simply a bool value
+        // bit-banding on the data register
         DigitalPin& operator=(bool onOff) {
-            *(volatile uint32_t*)(data + (pinNumber() << 2)) = onOff ? 0xff : 0x00;
+            *(volatile uint32_t*)(data + (pinBits << 2)) = onOff ? 0xff : 0x00;
             return *this;
         }
         operator bool() const {
-            return *(volatile uint32_t*)(data + (pinNumber() << 2)) != 0;
+            return *(volatile uint32_t*)(data + (pinBits << 2)) != 0;
         }
  
-        RegisterBit<gpioPortBase + 0x420, pinI> alternateFunctionEnable;
-        RegisterMasked<gpioPortBase + 0x52c, 4 * pinI, 4> portMode;
+        RegisterBit<gpioPortBase + 0x420, pinIndex> alternateFunctionEnable;
+        RegisterMasked<gpioPortBase + 0x52c, 4 * pinIndex, 4> portMode;
 
         const uint32_t base;
-        const PinIndex pin;
 
-        uint8_t pinNumber() const {
-            return static_cast<uint8_t>(pin);
-        }
         // the following are offsets to various GPIO control registers
         // belonging to a particular port
         // in each register, the lower 8 bits correspond to one of
@@ -205,9 +194,9 @@ struct Port {
 
     };
 
-    const DigitalPin<PinIndex::_1> pin1;;
-    const DigitalPin<PinIndex::_2> pin2;
-    const DigitalPin<PinIndex::_3> pin3;
+    const DigitalPin<PinIndex::Pin1> pin1;;
+    const DigitalPin<PinIndex::Pin2> pin2;
+    const DigitalPin<PinIndex::Pin3> pin3;
 };
 
 enum class TimerBlockIndex {

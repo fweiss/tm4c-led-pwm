@@ -13,9 +13,6 @@ static void delay(uint32_t cycles) {
 
 // section 11.3.2.5, 11.4.5
 // 11.2 gpio pin output, GPIOAFSEL, GPIOPCTL (code 7)
-// r = F1 T0CCP1
-// g = F2 T1CCP0
-// b = F3 T1CCP1
 // todo check if this causes specialization of the function
 template<TimerBlockIndex timerBlockIndex, uint8_t timerIndex>
 void setupPwm(TimerBlockTimer<timerBlockIndex, timerIndex> &timer) {

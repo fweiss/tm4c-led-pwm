@@ -52,7 +52,7 @@ int main(void) {
 	auto blueLed = port.pin2;
 	auto greenLed = port.pin3;
 
-#define EXPERIMENT_2
+#define EXPERIMENT_1
 	// r = PF1 T0CCP1
 	// b = PF2 T1CCP0
 	// g = PF3 T1CCP1
