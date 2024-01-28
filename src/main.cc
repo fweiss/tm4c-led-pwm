@@ -44,7 +44,8 @@ int main(void) {
 	__asm__("nop");
 	__asm__("nop");
 
-	const uint32_t outpins = (LED_R | LED_G | LED_B);
+	// const uint32_t outpins = (LED_R | LED_G | LED_B);
+	const uint32_t outpins = (LED_G | LED_B);
 	gpio_mode_setup(RGB_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, outpins);
 	gpio_set_output_config(RGB_PORT, GPIO_OTYPE_PP, GPIO_DRIVE_2MA, outpins);
 	
@@ -52,7 +53,18 @@ int main(void) {
 	auto blueLed = port.pin2;
 	auto greenLed = port.pin3;
 
-#define EXPERIMENT_1
+	// mode output
+	// could streamline using or'ed pin bits
+	redLed.directionOutput = true;
+	redLed.digitalEnable = true;
+	redLed.alternateFunctionEnable = false;
+	redLed.pullUpEnable = false;
+	redLed.pullDownEnable = false;
+	// output config
+	redLed.openDrainEnable = false;
+	redLed.drive2mA = true;
+
+#define EXPERIMENT_2
 	// r = PF1 T0CCP1
 	// b = PF2 T1CCP0
 	// g = PF3 T1CCP1

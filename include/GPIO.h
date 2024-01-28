@@ -147,7 +147,13 @@ struct Port {
             return *(volatile uint32_t*)(data + (pinBits << 2)) != 0;
         }
  
+        RegisterBit<gpioPortBase + 0x400, pinIndex> directionOutput;
         RegisterBit<gpioPortBase + 0x420, pinIndex> alternateFunctionEnable;
+        RegisterBit<gpioPortBase + 0x500, pinIndex> drive2mA; // GPIODR2R
+        RegisterBit<gpioPortBase + 0x50c, pinIndex> openDrainEnable; // GPIOODR
+        RegisterBit<gpioPortBase + 0x510, pinIndex> pullUpEnable;
+        RegisterBit<gpioPortBase + 0x514, pinIndex> pullDownEnable;
+        RegisterBit<gpioPortBase + 0x51c, pinIndex> digitalEnable;
         RegisterMasked<gpioPortBase + 0x52c, 4 * pinIndex, 4> portMode;
 
         const uint32_t base;
