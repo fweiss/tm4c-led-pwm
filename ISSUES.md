@@ -42,3 +42,17 @@ where it is the <> that indicates a compile-time "call".
 This structure may strain the compiler's memory usage.
 But it may provide a close to zero-cost, fluent API.
 
+A new problem cropped up. "Boileplate" code, such as for setting up a digital pin
+would tend to be duplicated as it's template code. We'd like to have user functions
+that set several RegisterBits, but that can be specialised for digital pins
+via run-time parameter instead of compile-time parameter.
+
+For example: a digital pin an be configured via ``theLed.directionOtput = true``.
+we'd also like to be able to do this:
+```
+Digtal
+```
+
+Can bottlenect it through a plain class This class does the actual work but doesn't need to be 
+tenplated. The current Register* classes would have templated classes, such as
+``RegisterBit<base + 0x50c> outputDirectionEnable;``, then ``bitset``, then ``write``.

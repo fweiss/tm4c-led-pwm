@@ -4,6 +4,7 @@
 #include "GPIO.h"
 #include "pwm-timer.h"
 // #include "pwm.h"
+#include "two-template.h"
 
 enum {
 	PLL_DIV_80MHZ 	= 5,
