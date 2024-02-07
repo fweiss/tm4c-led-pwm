@@ -66,14 +66,18 @@ struct RB2 : RegisterAccess {
 
 // new port pin that can be passed to a function
 struct DP {
-    DP(uint32_t port_, uint8_t pin_) : pinIndex(pin_) {
+    DP(uint32_t portBase_, uint8_t pin_) : portBase(portBase_), pinIndex(pin_) {
         // this->directionOutput(1, 2);
     }
-    const uint32_t x = 0x999;
+    const uint32_t portBase;
     const uint8_t pinIndex;
     // a way to get around the "most vexing parse"
+
     // supposing compiler elides the copy constructor
-    RB2 directionOutput = RB2(x, pinIndex);
+    // RB2 directionOutput = RB2(x, pinIndex);
+
+    // note use of {} to avoid Most Vexing Parse
+    RB2 directionOutput{portBase + 0x400, pinIndex};
 
     // like to use a class template here
     // RBT<portBase + 0x400, 2> directionOutput;
@@ -93,9 +97,9 @@ struct DPTT {
 
 // this would compose without a function template
 void wo_notemplate() {
-    const uint32_t port = 0x4003d000;
-    const uint8_t pin = 3;
-    DP dp(port, pin);
+    const uint32_t portBase = 0x4003d000;
+    const uint8_t pinIndex = 3;
+    DP dp(portBase, pinIndex);
 
     dp.directionOutput = true;
     // the above is the non-template way
