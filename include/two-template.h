@@ -32,22 +32,6 @@ void w_template() {
 
 // ====================
 
-// new register bit, but we'd like to use the same template
-struct RB : RegisterAccess {
-    RB(uint32_t registerAddress_, uint8_t pin_) : registerAddress(registerAddress_), pin(pin_) {}
-    const uint32_t registerAddress;
-    const uint8_t pin;
-
-    void operator=(bool onoff) {
-        const uint32_t bitmask = (1 << pin);
-        if (onoff) {
-            setbits(registerAddress, bitmask);
-        } else {
-            clearbits(registerAddress, bitmask);
-        }
-    }
-};
-
 // non-template register bit
 struct RB2 : RegisterAccess {
     RB2(const uint32_t registerAddress_, const uint8_t pinIndex) :
@@ -64,7 +48,7 @@ struct RB2 : RegisterAccess {
     }
 };
 
-// rgister field
+// register field
 struct RF : RegisterAccess {
     RF(uint32_t registerAddress, uint8_t offset, uint32_t width) :
         registerAddress_(registerAddress),
@@ -74,10 +58,12 @@ struct RF : RegisterAccess {
     const uint32_t width_;
     const uint8_t offset_;
 
+    // looks wordy, but optimized is just four instructions
+    // LDR, AND, ORR, STR
     void operator=(uint32_t value) {
-        uint32_t mask = (1 << width_) - 1; // eg 2 -> 0x003
+        const uint32_t mask = (1 << width_) - 1; // eg 2 -> 0x003
         uint32_t tmp = read(registerAddress_);
-        tmp &= (mask << offset_);
+        tmp &= ~(mask << offset_);
         tmp |= (value & mask) << offset_;
         write(registerAddress_, tmp);
     }
@@ -91,30 +77,12 @@ struct DP {
     }
     const uint32_t portBase;
     const uint8_t pinIndex;
-    // a way to get around the "most vexing parse"
-
-    // supposing compiler elides the copy constructor
-    // RB2 directionOutput = RB2(x, pinIndex);
 
     // note use of {} to avoid Most Vexing Parse
     RB2 directionOutput{portBase + 0x400, pinIndex};
     RF portMode{portBase + 0x404, 4 * pinIndex, 4};
-
-    // like to use a class template here
-    // RBT<portBase + 0x400, 2> directionOutput;
-    // RB2 directionOutput(x + 0x400, pinIndex);
-    // RB2 &directionOutput = RB2(1, 2);
-    // RB2(1, 2) directionOutput;
 };
 
-// using a template for digital pin
-template<uint32_t portBase, uint8_t pinIndex>
-struct DPTT {
-    DPTT() : dp(portBase, pinIndex) {}
-    DP dp;
-    // RegisterBit<portBase + 0x400, pinIndex> directionOutput;
-;
-};
 
 // this would compose without a function template
 void wo_notemplate() {
@@ -124,6 +92,4 @@ void wo_notemplate() {
 
     dp.directionOutput = true;
     dp.portMode = 4;
-    // the above is the non-template way
-    // dp is an object, while DigitalPin is an enclosed class template
 }
