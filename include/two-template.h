@@ -64,6 +64,26 @@ struct RB2 : RegisterAccess {
     }
 };
 
+// rgister field
+struct RF : RegisterAccess {
+    RF(uint32_t registerAddress, uint8_t offset, uint32_t width) :
+        registerAddress_(registerAddress),
+        width_(width),
+        offset_(offset) {}
+    const uint32_t registerAddress_;
+    const uint32_t width_;
+    const uint8_t offset_;
+
+    void operator=(uint32_t value) {
+        uint32_t mask = (1 << width_) - 1; // eg 2 -> 0x003
+        uint32_t tmp = read(registerAddress_);
+        tmp &= (mask << offset_);
+        tmp |= (value & mask) << offset_;
+        write(registerAddress_, tmp);
+    }
+};
+// RB(x, y) = RF(x, y, 1)
+
 // new port pin that can be passed to a function
 struct DP {
     DP(uint32_t portBase_, uint8_t pin_) : portBase(portBase_), pinIndex(pin_) {
@@ -78,6 +98,7 @@ struct DP {
 
     // note use of {} to avoid Most Vexing Parse
     RB2 directionOutput{portBase + 0x400, pinIndex};
+    RF portMode{portBase + 0x404, 4 * pinIndex, 4};
 
     // like to use a class template here
     // RBT<portBase + 0x400, 2> directionOutput;
@@ -98,10 +119,11 @@ struct DPTT {
 // this would compose without a function template
 void wo_notemplate() {
     const uint32_t portBase = 0x4003d000;
-    const uint8_t pinIndex = 3;
+    const uint8_t pinIndex = 4;
     DP dp(portBase, pinIndex);
 
     dp.directionOutput = true;
+    dp.portMode = 4;
     // the above is the non-template way
     // dp is an object, while DigitalPin is an enclosed class template
 }
