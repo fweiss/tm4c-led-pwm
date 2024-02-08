@@ -1,37 +1,5 @@
 #include "GPIO.h"
 
-// old register bit class template
-template<uint32_t registerAddress, uint8_t pinIndex>
-struct RBT : RegisterAccess {
-    void operator=(bool onoff) {
-        const uint32_t bitmask = (1 << pinIndex);
-        if (onoff) {
-            setbits(registerAddress, bitmask);
-        } else {
-            clearbits(registerAddress, bitmask);
-        }       
-    }
-};
-
-// old digital pin class template
-template<uint32_t portBase, uint8_t pinIndex>
-struct DPT {
-    RBT<portBase + 0x400, pinIndex> directionOutput;
-};
-
-// using old digital pin class template
-// cannot pass digital pin function argument
-// would need function template
-void w_template() {
-    const uint32_t portBase = 0x4003d000;
-    const uint8_t pinIndex = 3;
-
-    DPT<portBase, pinIndex> dpt;
-    dpt.directionOutput = true;
-}
-
-// ====================
-
 // non-template register bit
 struct RBit : RegisterAccess {
     RBit(const uint32_t registerAddress_, const uint8_t pinIndex) :
