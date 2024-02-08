@@ -44,6 +44,19 @@ struct DP {
     const uint32_t portBase;
     const uint8_t pinIndex;
 
+    const uint32_t data = portBase + 0x000;
+    const uint32_t pinBits = (1 << pinIndex);
+
+    // the behavior is simply a bool value
+    // bit-banding on the data register
+    void operator=(bool onOff) {
+        *(volatile uint32_t*)(data + (pinBits << 2)) = onOff ? 0xff : 0x00;
+    }
+    operator bool() const {
+        return *(volatile uint32_t*)(data + (pinBits << 2)) != 0;
+    }
+
+
     // note use of {} to avoid Most Vexing Parse
     RBit    directionOutput {portBase + 0x400, pinIndex};
     RField  portMode        {portBase + 0x404, pinIndex * 4, 4};

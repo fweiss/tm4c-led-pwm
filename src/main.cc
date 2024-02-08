@@ -51,6 +51,8 @@ int main(void) {
 	gpio_set_output_config(RGB_PORT, GPIO_OTYPE_PP, GPIO_DRIVE_2MA, outpins);
 	
 	auto redLed = port.pin1;
+	DP newRedLed{0x40058000 + 0x5000, 1};
+
 	auto blueLed = port.pin2;
 	auto greenLed = port.pin3;
 
@@ -97,9 +99,11 @@ int main(void) {
 	pwmLed.portMode = digitalFunctionTimerCCP;
 
     while (true) {
-		mainLed = true;
+		// mainLed = true;
+		newRedLed = true;
 		delay();
-		mainLed = false;
+		// mainLed = false;
+		newRedLed = false;
 		delay();
     }
 
