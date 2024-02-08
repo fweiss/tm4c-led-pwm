@@ -33,8 +33,8 @@ void w_template() {
 // ====================
 
 // non-template register bit
-struct RB2 : RegisterAccess {
-    RB2(const uint32_t registerAddress_, const uint8_t pinIndex) :
+struct RBit : RegisterAccess {
+    RBit(const uint32_t registerAddress_, const uint8_t pinIndex) :
         registerAddress(registerAddress_), pin(pinIndex) {}
     const uint32_t registerAddress;
     const uint8_t pin;
@@ -49,8 +49,8 @@ struct RB2 : RegisterAccess {
 };
 
 // register field
-struct RF : RegisterAccess {
-    RF(uint32_t registerAddress, uint8_t offset, uint32_t width) :
+struct RField : RegisterAccess {
+    RField(uint32_t registerAddress, uint8_t offset, uint32_t width) :
         registerAddress_(registerAddress),
         width_(width),
         offset_(offset) {}
@@ -68,19 +68,17 @@ struct RF : RegisterAccess {
         write(registerAddress_, tmp);
     }
 };
-// RB(x, y) = RF(x, y, 1)
+// RB(x, y) = RField(x, y, 1)
 
-// new port pin that can be passed to a function
+// digital pin that can be passed to a function
 struct DP {
-    DP(uint32_t portBase_, uint8_t pin_) : portBase(portBase_), pinIndex(pin_) {
-        // this->directionOutput(1, 2);
-    }
+    DP(uint32_t portBase_, uint8_t pin_) : portBase(portBase_), pinIndex(pin_) {}
     const uint32_t portBase;
     const uint8_t pinIndex;
 
     // note use of {} to avoid Most Vexing Parse
-    RB2 directionOutput{portBase + 0x400, pinIndex};
-    RF portMode{portBase + 0x404, 4 * pinIndex, 4};
+    RBit    directionOutput {portBase + 0x400, pinIndex};
+    RField  portMode        {portBase + 0x404, pinIndex * 4, 4};
 };
 
 
