@@ -58,14 +58,26 @@ int main(void) {
 
 	// mode output
 	// could streamline using or'ed pin bits
-	redLed.directionOutput = true;
-	redLed.digitalEnable = true;
-	redLed.alternateFunctionEnable = false;
-	redLed.pullUpEnable = false;
-	redLed.pullDownEnable = false;
+	// redLed.directionOutput = true;
+	// redLed.digitalEnable = true;
+	// redLed.alternateFunctionEnable = false;
+	// redLed.pullUpEnable = false;
+	// redLed.pullDownEnable = false;
 	// output config
-	redLed.openDrainEnable = false;
-	redLed.drive2mA = true;
+	// redLed.openDrainEnable = false;
+	// redLed.drive2mA = true;
+
+	// mode output
+	// could streamline using or'ed pin bits
+	newRedLed.directionOutput = true;
+	newRedLed.digitalEnable = true;
+	newRedLed.alternateFunctionEnable = false;
+	newRedLed.pullUpEnable = false;
+	delay(1); // hmm, no flashing without this
+	newRedLed.pullDownEnable = false;
+	// // output config
+	newRedLed.openDrainEnable = false;
+	newRedLed.drive2mA = true;
 
 #define EXPERIMENT_2
 	// r = PF1 T0CCP1

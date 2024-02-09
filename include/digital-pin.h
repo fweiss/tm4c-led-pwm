@@ -1,6 +1,9 @@
 #include "GPIO.h"
 
-// non-template register bit
+// Define a bit in a register that can be accessed as a boolean.
+// Use ``operator=()`` to set and ``operator bool()`` to read.
+//
+// See also RField
 struct RBit : RegisterAccess {
     RBit(const uint32_t registerAddress_, const uint8_t pinIndex) :
         registerAddress(registerAddress_), pin(pinIndex) {}
@@ -38,9 +41,26 @@ struct RField : RegisterAccess {
 };
 // RB(x, y) = RField(x, y, 1)
 
+// define the data sheet mnemonics to facilite cross reference
+struct DPRegisters {
+    DPRegisters(uint32_t portBase_) : portBase(portBase_) {}
+    const uint32_t portBase;
+
+    const uint32_t GPIODATA = portBase + 0x000; // note special addressing mode
+    const uint32_t GPIODIR = portBase + 0x400;
+    // 0x404-0x41c interrupt
+    const uint32_t GPIOAFSEL = portBase + 0x420;
+    const uint32_t GPIODR2R = portBase + 0x500;
+    const uint32_t GPIOODR = portBase + 0x50C;
+    const uint32_t GPIOPUR = portBase + 0x510;
+    const uint32_t GPIOPDR = portBase + 0x514;
+    const uint32_t GPIODEN = portBase + 0x51C;
+    const uint32_t GPIOPCTL = portBase + 0x52C;
+};
+
 // digital pin that can be passed to a function
-struct DP {
-    DP(uint32_t portBase_, uint8_t pin_) : portBase(portBase_), pinIndex(pin_) {}
+struct DP : DPRegisters {
+    DP(uint32_t portBase_, uint8_t pin_) : DPRegisters(portBase), portBase(portBase_), pinIndex(pin_) {}
     const uint32_t portBase;
     const uint8_t pinIndex;
 
@@ -56,10 +76,17 @@ struct DP {
         return *(volatile uint32_t*)(data + (pinBits << 2)) != 0;
     }
 
-
     // note use of {} to avoid Most Vexing Parse
-    RBit    directionOutput {portBase + 0x400, pinIndex};
+    RBit    directionOutput         {GPIODIR, pinIndex};
+    RBit    digitalEnable           {GPIODEN, pinIndex};
+    RBit    alternateFunctionEnable {GPIOAFSEL, pinIndex};
+	RBit    pullUpEnable            {GPIOPUR, pinIndex};
+	RBit    pullDownEnable          {GPIOPDR, pinIndex};
+	RBit    openDrainEnable         {GPIOODR, pinIndex};
+	RBit    drive2mA                {GPIODR2R, pinIndex};
+
     RField  portMode        {portBase + 0x404, pinIndex * 4, 4};
+
 };
 
 
