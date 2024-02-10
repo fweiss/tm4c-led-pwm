@@ -50,11 +50,13 @@ int main(void) {
 	gpio_mode_setup(RGB_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, outpins);
 	gpio_set_output_config(RGB_PORT, GPIO_OTYPE_PP, GPIO_DRIVE_2MA, outpins);
 	
-	auto redLed = port.pin1;
+	// auto redLed = port.pin1;
 	DP newRedLed{0x40058000 + 0x5000, 1};
+	DP blueLed{0x40058000 + 0x5000, 2};
+	DP greenLed{0x40058000 + 0x5000, 3};
 
-	auto blueLed = port.pin2;
-	auto greenLed = port.pin3;
+	// auto blueLed = port.pin2;
+	// auto greenLed = port.pin3;
 
 	// mode output
 	// could streamline using or'ed pin bits
@@ -96,7 +98,8 @@ int main(void) {
 #ifdef EXPERIMENT_2
 	// block 1 timer 0/1 experiment
 	// flash red dim green/blue
-    auto &mainLed = redLed;
+    // auto &mainLed = redLed;
+    auto &mainLed = newRedLed;
 	auto &pwmLed = greenLed;
 	auto &timerBlock = TimerBlocks::block1;
 	auto &timer = timerBlock.timerB;

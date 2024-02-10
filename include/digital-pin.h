@@ -85,7 +85,7 @@ struct DP : DPRegisters {
 	RBit    openDrainEnable         {GPIOODR, pinIndex};
 	RBit    drive2mA                {GPIODR2R, pinIndex};
 
-    RField  portMode        {portBase + 0x404, pinIndex * 4, 4};
+    RField  portMode                {GPIOPCTL, pinIndex * 4, 4};
 
 };
 
