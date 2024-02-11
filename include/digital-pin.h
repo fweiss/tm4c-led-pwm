@@ -9,8 +9,9 @@ struct RBit : RegisterAccess {
         registerAddress(registerAddress_), pin(pinIndex) {}
     const uint32_t registerAddress;
     const uint8_t pin;
+    const uint32_t bitmask = (1 << pin);
+
     void operator=(bool onoff) {
-        const uint32_t bitmask = (1 << pin);
         if (onoff) {
             setbits(registerAddress, bitmask);
         } else {
@@ -28,11 +29,11 @@ struct RField : RegisterAccess {
     const uint32_t registerAddress_;
     const uint32_t width_;
     const uint8_t offset_;
+    const uint32_t mask = (1 << width_) - 1; // eg 2 -> 0x003
 
     // looks wordy, but optimized is just four instructions
     // LDR, AND, ORR, STR
     void operator=(uint32_t value) {
-        const uint32_t mask = (1 << width_) - 1; // eg 2 -> 0x003
         uint32_t tmp = read(registerAddress_);
         tmp &= ~(mask << offset_);
         tmp |= (value & mask) << offset_;
