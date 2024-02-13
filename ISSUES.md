@@ -56,3 +56,14 @@ Digtal
 Can bottlenect it through a plain class This class does the actual work but doesn't need to be 
 tenplated. The current Register* classes would have templated classes, such as
 ``RegisterBit<base + 0x50c> outputDirectionEnable;``, then ``bitset``, then ``write``.
+
+So, tried a no-template implementation, but it didn't work 100%.
+Tried introducing the register addresses as a base class,
+but observed unwanted initializtion code, not as slick as the templated version.
+You see ``RegisterAddress<portBase>`` is really different than ``RegisterAddress(portBase),
+even when the members are const. Quite a bit different than constexpr, even though
+the compiler often does a good optimiztion with const and even without.
+And trying to use a parent class template whose template parameters come from
+the derived class constructor parameters doesn't work.
+
+There is a notion of constexpr constructors that hasn't benn tried.
