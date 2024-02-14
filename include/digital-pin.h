@@ -43,8 +43,8 @@ struct RField : RegisterAccess {
 // RB(x, y) = RField(x, y, 1)
 
 // define the data sheet mnemonics to facilite cross reference
-struct DPRegisters {
-    DPRegisters(uint32_t portBase_) : portBase(portBase_) {}
+struct YDPRegisters {
+    YDPRegisters(uint32_t portBase_) : portBase(portBase_) {}
     const uint32_t portBase;
 
     const uint32_t GPIODATA = portBase + 0x000; // note special addressing mode
@@ -57,6 +57,32 @@ struct DPRegisters {
     const uint32_t GPIOPDR = portBase + 0x514;
     const uint32_t GPIODEN = portBase + 0x51C;
     const uint32_t GPIOPCTL = portBase + 0x52C;
+};
+
+struct DPRegisters {
+    constexpr DPRegisters(uint32_t portBase) : 
+
+    GPIODATA(portBase + 0x000), // note special addressing mode
+    GPIODIR(portBase + 0x400),
+    // 0x404-0x41c interrupt
+     GPIOAFSEL(portBase + 0x420),
+     GPIODR2R(portBase + 0x500),
+     GPIOODR(portBase + 0x50C),
+     GPIOPUR(portBase + 0x510),
+     GPIOPDR(portBase + 0x514),
+     GPIODEN(portBase + 0x51C),
+     GPIOPCTL(portBase + 0x52C)
+    {}
+    uint32_t GPIODATA; // note special addressing mode
+    uint32_t GPIODIR;
+    // 0x404-0x41c interrupt
+    uint32_t GPIOAFSEL;
+    uint32_t GPIODR2R;
+    uint32_t GPIOODR;
+    uint32_t GPIOPUR;
+    uint32_t GPIOPDR;
+    uint32_t GPIODEN;
+    uint32_t GPIOPCTL;
 };
 
 // digital pin that can be passed to a function
