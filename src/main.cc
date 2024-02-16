@@ -5,6 +5,7 @@
 #include "pwm-timer.h"
 // #include "pwm.h"
 #include "digital-pin.h"
+#include "function-template.h"
 
 enum {
 	PLL_DIV_80MHZ 	= 5,
