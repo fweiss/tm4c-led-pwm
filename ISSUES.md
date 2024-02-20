@@ -67,3 +67,54 @@ And trying to use a parent class template whose template parameters come from
 the derived class constructor parameters doesn't work.
 
 There is a notion of constexpr constructors that hasn't benn tried.
+
+## Templates, contexpr, zero-cost, optiized?
+Sort of an impasse has been reached trying to get zero-cost code.
+
+> Holding strictly to zero-cost may be overkill.
+> can be noted that inlined, optimized code is less
+> useful in "setup" code, which runs once, versus
+> active code which my run in ISRs.
+
+The pros and cons of the two major approaches are:
+
+### Class templates
+- best coding experience
+- very zero cost
+- code duplication when trying to create "setup" functions
+
+When creating setup functions, such as for using LEDs,
+it's desirable to take the digital pin object as a parameter.
+However, since that is a templated class object, the setup
+function needs to be templated as well. Thus the code is
+instantiated (copied) for each digital pin. There is supposed to be
+a work-around for this: use common non-templated bas class. But
+this seems to introduce the need for a vtable.
+
+### No class templates
+- switches from template arguments ``<>`` to object initialization ``{}``
+- inline optimization still generally takes place
+- the register addresses are constructed in memory instead of inline
+
+In this case, objects of the digital pin class can be passed as
+arguments to a setup function, and there is no duplicated code.
+However, the class for mapping registers per port didn't get inlined.
+It looks like the compiler wants to construct those const varibales
+on the stack.
+
+> was this even the case for constexpr constructor?
+
+> maybe a different approach is a constexpr function to add the
+> portbase to the register offset? but that would be wordy.
+
+> kind of attached to defining the register bit/fields using register
+> mnemonics as per the MCU datasheet, either as
+> ``RBit<GPIODEN, pin> enable`` or as ``RBit enable{GPIODEN, pin}``
+> but not as ``RBit enable{portBase + 0x404}``
+
+It seemed easy enough, based on the experience of using the static
+base class ``RegisterAccess``. that easily augmented the register field
+classes with the read, write, etc. methods, which are static.
+So on the surface, the same could apply for the register mnemonics.
+This could be done using a statuc class tenplate, but then we are back
+to the problecm of using function tenplates for "setup" function. 
