@@ -1,3 +1,7 @@
+# with opnecm3
+A minimal app example for comparison.
+
+## Links and refernces
 https://github.com/yuvadm/tiva-c/blob/master/boards/ek-tm4c123gxl/qs-rgb/qs-rgb.c
 
 https://github.com/libopencm3/libopencm3-examples/blob/master/examples/tiva/lm4f/stellaris-ek-lm4f120xl/miniblink/miniblink.c
