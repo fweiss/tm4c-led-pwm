@@ -1,22 +1,22 @@
 #pragma once
 
 static void delay(uint32_t cycles) {
-	for (uint32_t i = 0; i < cycles; i++) {
-		__asm__("nop");
+    for (uint32_t i = 0; i < cycles; i++) {
+        __asm__("nop");
     }
 }
 
 template<PortIndex portIndex, PinIndex pinIndex>
 void setupOutputLed(DigitalPin<portIndex, pinIndex> &ledPin) {
-	// could streamline using or'ed pin bits
-	ledPin.directionOutput = true;
-	ledPin.digitalEnable = true;
-	ledPin.alternateFunctionEnable = false;
-	ledPin.pullUpEnable = false;
-	ledPin.pullDownEnable = false;
-	// output config
-	ledPin.openDrainEnable = false;
-	ledPin.drive2mA = true;
+    // could streamline using or'ed pin bits
+    ledPin.directionOutput = true;
+    ledPin.digitalEnable = true;
+    ledPin.alternateFunctionEnable = false;
+    ledPin.pullUpEnable = false;
+    ledPin.pullDownEnable = false;
+    // output config
+    ledPin.openDrainEnable = false;
+    ledPin.drive2mA = true;
 }
 
 // clock
@@ -33,19 +33,19 @@ void setupOutputLed(DigitalPin<portIndex, pinIndex> &ledPin) {
 template<TimerBlockIndex timerBlockIndex, TimerIndex timerIndex>
 void setupPwm(Timer<timerBlockIndex, timerIndex> &timer) {
 
-	timer.enable = false;
-	delay(7); // empirically need at least 7 ?
+    timer.enable = false;
+    delay(7); // empirically need at least 7 ?
 
-	// setup for PWM
-	// could be flattened to one write
-	timer.alternateModeSelect = 1; // TnAMS PWM mode
-	timer.captureMode = 0; // TnCMR edge count mode
-	timer.timerMode = 2; // TnMR 2=periodic
+    // setup for PWM
+    // could be flattened to one write
+    timer.alternateModeSelect = 1; // TnAMS PWM mode
+    timer.captureMode = 0; // TnCMR edge count mode
+    timer.timerMode = 2; // TnMR 2=periodic
 
-	// note that in non-invert, match is count down
-	// at which point output is cleared
-	// in invert, match is the duty cycle
-	timer.invertOutput = true; // debug
-	
-	timer.enable = true;
+    // note that in non-invert, match is count down
+    // at which point output is cleared
+    // in invert, match is the duty cycle
+    timer.invertOutput = true; // debug
+
+    timer.enable = true;
 }

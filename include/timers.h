@@ -49,8 +49,8 @@ struct Timer<timerBlockIndex, TimerIndex::TimerB> : Register, RegisterAccess {
     RegisterBit<R.GPTMCTL, 14> invertOutput; // TBPWML
 
     RegisterField<R.GPTMTBMR, 3, 1> alternateModeSelect; // TnAMS PWM mode
-	RegisterField<R.GPTMTBMR, 2, 1> captureMode; // TnCMR edge count mode
-	RegisterField<R.GPTMTBMR, 0, 2> timerMode; // TnMR 2=periodic
+    RegisterField<R.GPTMTBMR, 2, 1> captureMode; // TnCMR edge count mode
+    RegisterField<R.GPTMTBMR, 0, 2> timerMode; // TnMR 2=periodic
 
     Register32<R.GPTMTBILR> interval;
     Register32<R.GPTMTBMATCHR> match;
@@ -62,7 +62,7 @@ template<TimerBlockIndex timerBlockIndex, TimerIndex timerIndex>
 struct PWMTimer : Timer<timerBlockIndex, timerIndex>, Register {
     static constexpr TimerRegisters<timerBlockIndex> R{};
 
-	// in PWM mode, prescaler is MSB of count
+    // in PWM mode, prescaler is MSB of count
     RegisterSpan<R.GPTMTBILR, 16, R.GPTMTBPR, 8> pwmInterval;
     RegisterSpan<R.GPTMTBMATCHR, 16, R.GPTMTBPMR, 8> pwmMatch;
 };
