@@ -2,9 +2,6 @@
 
 #include <stdint.h>
 
-#include <libopencm3/lm4f/rcc.h>
-// #include <libopencm3/lm4f/gpio.h>
-
 #include "common.h"
 #include "addresses.h"
 #include "registers.h"
