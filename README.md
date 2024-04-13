@@ -1,6 +1,65 @@
 # PIO LED PWM
-A POC to create an object-oriented HAL/API for the TM4C123g MCU,
+A POC to create an object-oriented HAL/API for the Texas Instruments TM4C123g MCU,
 geared toward recreating the sample app.
+The app flashes and dims the RGB LEDs on the development board.
+
+## Development environment
+Since this is a POC, a bare-bones environment is used.
+- Visual Studio Code
+- PlatformIO IDE Extension
+- C/C++ and C/C++ Extension pack Extensions
+
+Development platform has been  Macbook Pro, but others should work as well.
+
+## Running and testing on hardware
+Use the following hardware:
+- Texas Instruments TM4C123GXL LaunchPad board
+
+Choose the "lptm4c123gh6pm" PIO environment.
+Build, flash and debug using PlatformIO IDE.
+
+> The upload log shows an error.
+> Everything seems to work. Will try to clean that up.
+
+## Testing
+Currently there are no automated unit tests.
+Manual testing via:
+- visually verifying the RGB LED blinking patterns
+- oscilloscope to check timing of the pulses on the GPIO pins
+
+> There are currently two manual HIL test scenarios which are selected
+> via the ``EXPERIMENT_1`` and ``EXPERIMENT_2`` #defines
+> in src/main.cc. Each scenario uses a different
+> port and timer to verify the code is working correctly.
+
+
+## Inspecting the compiled code
+An important part of this POC is to verify that the compiled code is optimized
+and achieves the C++ [zero-overhead principle](https://en.cppreference.com/w/cpp/language/Zero-overhead_principle).
+
+To inspect the compiled code, build the "asm-listing" environemnt.
+The compiled Cortex M4 code is written to ``.pio/build/asm-listing/src/main.o``
+
+What you should see is that the C++ code:
+```
+Port<PortIndex::PortF> port;
+port.highPerformanceBusEnable = true;
+```
+results in the machine code:
+```
+    ldr	r3, .L10
+    ldr	r2, [r3]
+    orr	r2, r2, #32
+    str	r2, [r3]
+...
+.L10
+	.word	1074782316
+
+```
+which is as good as hand-coding and what libopencm3 generates.
+
+> The asm-listing build log shows an error. 
+> Haven't figured out what it is or how to clear it.
 
 ## MCU concepts
 - port
