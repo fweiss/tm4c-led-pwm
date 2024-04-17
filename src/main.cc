@@ -56,8 +56,7 @@ int main(void) {
     timer.pwmMatch = 42 * 65536;
 
     pwmLed.alternateFunctionEnable = true;
-    const uint8_t digitalFunctionTimerCCP = 7;
-    pwmLed.portMode = digitalFunctionTimerCCP;
+    pwmLed.digitalFunction = DigitalFunction::T0CPP0;
 
     while (true) {
         mainLed = true;

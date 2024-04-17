@@ -40,3 +40,17 @@ enum class OscillatorSource2 {
     PIOSC_DIV4 = 2, // precision internal oscillator / 4
     LFIOSC = 3,     // low frequency internal oscillator
 };
+
+// what we're trying to do here is to make the digital function
+// a type-safe enum that can be used in the DigitalPin class
+// but since the actual values are not sequential, we can't use
+// a simple enum.  Instead, we use a class with a nested enum.
+class DigitalFunction {
+public:
+    enum class Codes {
+        GPIO = 0,
+        TimerCCP = 7, 
+    };
+    static constexpr auto GPIO = Codes::GPIO;
+    static constexpr auto T0CPP0 = Codes::TimerCCP;
+};

@@ -104,6 +104,6 @@ struct DigitalPin : Register {
     RegisterBit<Q.GPIOPUR, pinIndex>            pullUpEnable;
     RegisterBit<Q.GPIOPDR, pinIndex>            pullDownEnable;
     RegisterBit<Q.GPIODEN, pinIndex>            digitalEnable;
-    RegisterField<Q.GPIOPCTL, 4 * pinIndex, 4>  portMode;
-
+    RegisterFieldType<Q.GPIOPCTL, 4 * pinIndex, 4, DigitalFunction::Codes>
+                                                digitalFunction;
 };
