@@ -48,8 +48,7 @@ int main(void) {
 #endif
 
     timerBlock.clockEnable = true; // todo delay
-    // timerBlock.configure = timerBlock.configure.TIMER_16_BIT;
-    timerBlock.configuration = 4;
+    timerBlock.configuration = TimerBlockConfiguration::SingleWide;
     setupPwm(timer);
 
     timer.pwmInterval = 255 * 65536;

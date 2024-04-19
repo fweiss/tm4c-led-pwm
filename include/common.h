@@ -54,3 +54,9 @@ public:
     static constexpr auto GPIO = Codes::GPIO;
     static constexpr auto T0CPP0 = Codes::TimerCCP;
 };
+
+enum class TimerBlockConfiguration {
+    DoubleWide = 0x00,         // 32/64 bit timers
+    RealTimeClock = 0x01,
+    SingleWide = 0x04,         // 16/32 bit timers
+};

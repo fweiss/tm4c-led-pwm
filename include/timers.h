@@ -14,8 +14,9 @@ struct TimerBlock : public Register {
     static constexpr TimerRegisters<blockIndexEnum> R{};
     static constexpr uint8_t blockIndex = static_cast<uint8_t>(blockIndexEnum);
 
-    RegisterBit<S.RCGCTIMER, blockIndex> clockEnable;
-    RegisterField<R.GPTMCFG, 0, 3> configuration;
+    RegisterBit<S.RCGCTIMER, blockIndex>    clockEnable;
+    RegisterFieldType<R.GPTMCFG, 0, 3, TimerBlockConfiguration>
+                                            configuration;
 };
 
 // Using partial template specialization here to map
