@@ -1,3 +1,6 @@
+/**
+ * API for the gneneral purpose timers module.
+*/
 #pragma once
 
 #include "common.h"

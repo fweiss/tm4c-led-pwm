@@ -57,29 +57,12 @@ int main(void) {
     setupOutputLed(blueLed);
     setupOutputLed(greenLed);
 
-#define EXPERIMENT_2
-    // r = PF1 T0CCP1
-    // b = PF2 T1CCP0
-    // g = PF3 T1CCP1
-
-#ifdef EXPERIMENT_1
-    // block 0 and 1, timer B
-    // flash blue dim red/green
-    auto &mainLed = blueLed;
-    auto &pwmLed = greenLed;
-    TimerBlock<TimerBlockIndex::Timer1> timerBlock;
-    PWMTimer<TimerBlockIndex::Timer1, TimerIndex::TimerB> timer;
-#endif
-
-#ifdef EXPERIMENT_2
     // block 1 timer 0/1 experiment
     // flash red dim green/blue
     auto &mainLed = redLed;
     auto &pwmLed = greenLed;
     TimerBlock<TimerBlockIndex::Timer1> timerBlock;
     PWMTimer<TimerBlockIndex::Timer1, TimerIndex::TimerB> timer;
-
-#endif
 
     timerBlock.clockEnable = true; // todo delay
     timerBlock.configuration = TimerBlockConfiguration::SingleWide;
@@ -98,9 +81,6 @@ int main(void) {
         delay(FLASH_DELAY);
         mainLed = false;
         delay(FLASH_DELAY);
-
-        timer2BDebug();
-
     }
 
     return 0;
