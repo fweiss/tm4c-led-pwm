@@ -10,6 +10,27 @@
 #include <stdint.h>
 #include "common.h"
 
+struct NVICRegisters {
+    static constexpr uint32_t base = 0xE000E000;
+
+    static constexpr uint32_t EN0          = base + 0x100;
+    static constexpr uint32_t EN1          = base + 0x104;
+    static constexpr uint32_t EN2          = base + 0x108;
+    static constexpr uint32_t EN3          = base + 0x10C;
+    static constexpr uint32_t EN4          = base + 0x110;
+
+    static constexpr uint32_t DIS0         = base + 0x180;
+
+    static constexpr uint32_t PEND0         = base + 0x200;
+
+    static constexpr uint32_t UNPEND0       = base + 0x200;
+
+    static constexpr uint32_t ACTIVE0       = base + 0x300;
+
+    // static constexpr uint32_t PRI       = base + 0x200;
+
+};
+
 struct SystemControleRegisters {
     static constexpr uint32_t base = 0x400FE000;
 

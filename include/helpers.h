@@ -49,3 +49,26 @@ void setupPwm(Timer<timerBlockIndex, timerIndex> &timer) {
 
     timer.enable = true;
 }
+
+void timer2BDebug() {
+    __attribute__((unused))uint32_t r = RegisterAccess::read(0x00000098); // NVIC
+    __attribute__((unused))uint32_t i = RegisterAccess::read(0xe000e300); // interrupt
+    __attribute__((unused))uint32_t e = RegisterAccess::read(0xe000e100); // EN0
+    constexpr uint32_t timerBase = 0x40032000;
+    __attribute__((unused))uint32_t mmis = RegisterAccess::read(timerBase + 0x020); // GPTMMIS
+    __attribute__((unused))uint32_t mris = RegisterAccess::read(timerBase + 0x01c); // GPTMRIS
+    __attribute__((unused))uint32_t imr = RegisterAccess::read(timerBase + 0x018); // GPTMIMR mask
+    __attribute__((unused))uint32_t tbr = RegisterAccess::read(timerBase + 0x04c); // GPTMTBR
+    delay(1); // dummy for breakpoint
+
+}
+void timer1BDebug() {
+    __attribute__((unused))uint32_t r = RegisterAccess::read(0x00000098); // NVIC
+    __attribute__((unused))uint32_t i = RegisterAccess::read(0xe000e300); // interrupt
+    __attribute__((unused))uint32_t e = RegisterAccess::read(0xe000e100); // EN0
+    __attribute__((unused))uint32_t mmis = RegisterAccess::read(0x40031000 + 0x020); // GPTMMIS
+    __attribute__((unused))uint32_t mris = RegisterAccess::read(0x40031000 + 0x01c); // GPTMRIS
+    __attribute__((unused))uint32_t imr = RegisterAccess::read(0x40031000 + 0x018); // GPTMIMR
+    delay(1); // dummy for breakpoint
+}
+

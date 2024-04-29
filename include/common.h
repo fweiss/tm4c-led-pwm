@@ -53,6 +53,7 @@ public:
     };
     static constexpr auto GPIO = Codes::GPIO;
     static constexpr auto T0CPP0 = Codes::TimerCCP;
+    static constexpr auto T2CPP1 = Codes::TimerCCP;
 };
 
 enum class TimerBlockConfiguration {

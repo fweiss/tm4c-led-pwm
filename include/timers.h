@@ -3,6 +3,7 @@
 #include "common.h"
 #include "registers.h"
 #include "addresses.h"
+#include "nvic.h"
 
 // Three classes of timer registers
 // - global, bit per timer block - RCGCTIMER
@@ -27,7 +28,8 @@ struct TimerBlock : public Register {
 // Despite this code being quite un-DRY, the alternatives did not
 // offer meaningful simplification.
 template<TimerBlockIndex timerBlockIndex, TimerIndex timerIndex>
-struct Timer;
+struct Timer {
+};
 
 template<TimerBlockIndex timerBlockIndex>
 struct Timer<timerBlockIndex, TimerIndex::TimerA> : Register {
@@ -42,9 +44,10 @@ struct Timer<timerBlockIndex, TimerIndex::TimerA> : Register {
     Register32<R.GPTMTAPMR> matchPrescale;
 };
 
-template<TimerBlockIndex timerBlockIndex>
-struct Timer<timerBlockIndex, TimerIndex::TimerB> : Register, RegisterAccess {
-    static const TimerRegisters<timerBlockIndex> R;
+template<TimerBlockIndex timerBlockIndexEnum>
+struct Timer<timerBlockIndexEnum, TimerIndex::TimerB> : Register, RegisterAccess {
+    static constexpr uint32_t timerBlockIndex = static_cast<uint32_t>(timerBlockIndexEnum);
+    static const TimerRegisters<timerBlockIndexEnum> R;
 
     RegisterBit<R.GPTMCTL, 8> enable; // TBEN
     RegisterBit<R.GPTMCTL, 14> invertOutput; // TBPWML
@@ -57,6 +60,25 @@ struct Timer<timerBlockIndex, TimerIndex::TimerB> : Register, RegisterAccess {
     Register32<R.GPTMTBMATCHR> match;
     Register32<R.GPTMTBPR> intervalPrescale;
     Register32<R.GPTMTBPMR> matchPrescale;
+
+    RegisterBit<R.GPTMRIS, 8> timeoutRawInterrupt; //  TBTORIS
+
+// 8=timeout, 11=match
+    RegisterBit<R.GPTMIMR, 8> timeoutInterruptMask;
+    RegisterBit<R.GPTMICR, 8> timeoutInterruptClear;
+
+    RegisterBit<R.GPTMTBMR, 5> matchInterruptEnable; // TAMIE
+    RegisterBit<R.GPTMIMR, 9> pwmInterruptEnable; // TAPWMIE
+
+    // map timer block index and timer index to interrupt number
+    // 0A=19, 1A=21, 2A=23, 3A=35, 4A=70, 5A=92
+    // see table 2-9
+    // fixme extract function
+    static constexpr uint32_t interruptNumber
+        = (timerBlockIndex < 3 ? 19 + 2 * timerBlockIndex 
+        : timerBlockIndex < 5 ? 35 + 35 * (timerBlockIndex - 3)
+        : 92) + static_cast<uint32_t>(TimerIndex::TimerB);
+    Interrupt<interruptNumber> interrupt;
 };
 
 template<TimerBlockIndex timerBlockIndex, TimerIndex timerIndex>

@@ -8,12 +8,13 @@
 
 #include <stdint.h>
 
+// fixme use reinterpret_cast instead of static_cast
 struct RegisterAccess {
-    static inline void clearbits(uint32_t registerAddress, uint32_t bits) {
-        *(volatile uint32_t*)registerAddress &= ~ bits;
-    }
     static inline void setbits(uint32_t registerAddress, uint32_t bits) {
         *(volatile uint32_t*)registerAddress |= bits;
+    }
+    static inline void clearbits(uint32_t registerAddress, uint32_t bits) {
+        *(volatile uint32_t*)registerAddress &= ~ bits;
     }
     static inline void write(uint32_t registerAddress, uint32_t value) {
         *(volatile uint32_t*)registerAddress = value;
@@ -90,6 +91,29 @@ struct Register {
         }
         // RegisterField<reg1, 0, width1> field1;
         // RegisterField<reg2, 0, width2> field2;
+    };
+
+    // use to access a single bit in a span of registers, such as EN0..EN4
+    template<uint32_t registerLSBAddress, uint32_t registerMSBAddress, uint8_t bitNumber>
+    struct RegisterSpanBit : RegisterAccess {
+        static_assert(bitNumber < 32, "bit number out of range");
+        static_assert(bitNumber > 0, "bit number out of range");
+        static constexpr uint8_t bitsPerWord = sizeof(uint32_t) * 8;
+        static constexpr uint32_t registerOffset = bitNumber / bitsPerWord;
+        static constexpr uint32_t registerAddress = registerLSBAddress + registerOffset * 4;
+        static constexpr uint32_t bitOffset = bitNumber % bitsPerWord;
+        static_assert(registerAddress <= registerMSBAddress, "register out of range");
+
+        void inline operator=(bool onoff) {
+            if (onoff) {
+                setbits(registerAddress, 1 << bitOffset);
+            } else {
+                clearbits(registerAddress, 1 << bitOffset);
+            }
+        }
+        inline operator bool() const {
+            return (read(registerAddress) & (1 << bitOffset)) != 0;
+        }
     };
 
 };
