@@ -1,8 +1,14 @@
 /**
  * Map the symbolic register names to addresses.
  * Match the symbols used in the datasheet https://www.ti.com/lit/ds/symlink/tm4c123gh6pm.pdf
- * Define banks and offsets at compile time.
- * Use class templates that instatiate static constexpr classes/structs.
+ * to facilitate cross-referencing.
+ * Use class templates that are specialized for each peripheral.
+ * Since all members are static constexpr, there is no direct memory allocation.
+ * When a member is referenced, the compiler will optimize the code and replace 
+ * the symbolic name with the actual addresses.
+ * 
+ * Instead of the customary use of #define, this approach uses the power of C++ templates
+ * and constexpr to provide compile-time address computation.
  */
 
 #pragma once
@@ -19,15 +25,16 @@ struct NVICRegisters {
     static constexpr uint32_t EN3          = base + 0x10C;
     static constexpr uint32_t EN4          = base + 0x110;
 
+    // todo: add the rest of the registers
     static constexpr uint32_t DIS0         = base + 0x180;
 
-    static constexpr uint32_t PEND0         = base + 0x200;
+    static constexpr uint32_t PEND0        = base + 0x200;
 
-    static constexpr uint32_t UNPEND0       = base + 0x200;
+    static constexpr uint32_t UNPEND0      = base + 0x280;
 
-    static constexpr uint32_t ACTIVE0       = base + 0x300;
+    static constexpr uint32_t ACTIVE0      = base + 0x300;
 
-    // static constexpr uint32_t PRI       = base + 0x200;
+    static constexpr uint32_t PRI          = base + 0x400;
 
 };
 
@@ -200,17 +207,16 @@ struct PortRegisters {
     static constexpr uint32_t GPIOPeriphID3 = base + 0xFEC;
 };
 
-// this is not only static, but also constexpr,
-// allowing the compiler to eliminate it from the runtime
 template<TimerBlockIndex timerIndexEnum>
 struct TimerRegisters {
     static constexpr uint32_t timerBaseRegister = 0x40030000;
     static constexpr uint32_t timerIndex = static_cast<uint32_t>(timerIndexEnum);
 
+    // offset is non-contiguous between 0xc000 and 0x7000 [11.5]
     static constexpr uint32_t baseOffset 
         = timerIndex < 8
         ? 0x1000 * timerIndex
-        : 0x1000 * (timerIndex + 5); // so that 0xc000 follows 0x7000 [11.5]
+        : 0x1000 * (timerIndex + 5);
     static constexpr uint32_t base = timerBaseRegister + baseOffset;
 
     // derived from the datasheet
