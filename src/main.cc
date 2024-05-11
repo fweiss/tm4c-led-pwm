@@ -5,9 +5,9 @@
 const int FLASH_DELAY = 8000000;
 
 // initially used PB1/T2CPP1 to  debug, but no interrupt with PWM mode
-void setupTimer2BInterrupt() {
+void setupTimer2AInterrupt() {
     TimerBlock<TimerBlockIndex::Timer2> timerBlock;
-    Timer<TimerBlockIndex::Timer2, TimerIndex::TimerB> timer;
+    Timer<TimerBlockIndex::Timer2, TimerIndex::TimerA> timer;
 
     timerBlock.clockEnable = true;
     timerBlock.configuration = TimerBlockConfiguration::SingleWide;
@@ -31,8 +31,8 @@ void setupTimer2BInterrupt() {
 }
 
 // for now, bite the bullet and hand code this instead of lambda
-extern "C" void timer2b_isr(void) {
-    Timer<TimerBlockIndex::Timer2, TimerIndex::TimerB> timer;
+extern "C" void timer2a_isr(void) {
+    Timer<TimerBlockIndex::Timer2, TimerIndex::TimerA> timer;
     timer.timeoutInterruptClear = true;
     DigitalPin<PortIndex::PortF, PinIndex::Pin2> blueLed;
     blueLed = !blueLed; // effective PWM 50%
@@ -74,7 +74,7 @@ int main(void) {
     pwmLed.alternateFunctionEnable = true;
     pwmLed.digitalFunction = DigitalFunction::T0CPP0;
 
-    setupTimer2BInterrupt();
+    setupTimer2AInterrupt();
 
     while (true) {
         mainLed = true;

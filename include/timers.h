@@ -23,55 +23,52 @@ struct TimerBlock : public Register {
                                             configuration;
 };
 
-// Using partial template specialization here to map
-// generic API registers, such as "interval", to specific registers,
-// such as "GPTMTAILR" and "GPTMTBILR", based on the TimerIndex template parameter.
-// This does create two separate template classes, however since they are
-// static, the optimizer collapses the API calls into inline code.
-// Despite this code being quite un-DRY, the alternatives did not
-// offer meaningful simplification.
-template<TimerBlockIndex timerBlockIndex, TimerIndex timerIndex>
-struct Timer {
-};
-
-template<TimerBlockIndex timerBlockIndex>
-struct Timer<timerBlockIndex, TimerIndex::TimerA> : Register {
-    static const TimerRegisters<timerBlockIndex> R;
-
-    RegisterBit<R.GPTMCTL, 0> enable; // TAEN
-    RegisterBit<R.GPTMCTL, 6> invertOutput; // TAPWML
-
-    Register32<R.GPTMTAILR> interval;
-    Register32<R.GPTMTAMATCHR> match;
-    Register32<R.GPTMTAPR> intervalPrescale;
-    Register32<R.GPTMTAPMR> matchPrescale;
-};
-
-template<TimerBlockIndex timerBlockIndexEnum>
-struct Timer<timerBlockIndexEnum, TimerIndex::TimerB> : Register, RegisterAccess {
+// the timer registers are split into two groups, A and B
+// the data structure is a bit irregular
+// many registers are paired, such as GPTMTAMR and GPTMTBMR
+// in the datasheet they are generically referred to as GPTMTnMR
+// but to maintain a consistent way to look up in the datasheet
+// names such as GPTMTAMR and GPTMTBMR are preferred
+// in other cases, such as GPTMCTL, two bits are used, one for each timer
+//
+// using partial template specialization was tried, but it turned out
+// to have too much code duplication
+//
+// instead a function template, AB() is used to select the correct register
+// or bit depending on the timer index
+// this makes the code a bit more verbose, but it is more DRY
+template<TimerBlockIndex timerBlockIndexEnum, TimerIndex timerIndex>
+struct Timer : Register, RegisterAccess {
     static constexpr uint32_t timerBlockIndex = static_cast<uint32_t>(timerBlockIndexEnum);
     static const TimerRegisters<timerBlockIndexEnum> R;
 
-    RegisterBit<R.GPTMCTL, 8> enable; // TBEN
-    RegisterBit<R.GPTMCTL, 14> invertOutput; // TBPWML
+    // AB(a, b) returns either a or b based on the timer index
+    template<typename T>
+    static constexpr T AB(T a, T b) {
+        return (timerIndex == TimerIndex::TimerA) ? a : b;
+    }
 
-    RegisterField<R.GPTMTBMR, 3, 1> alternateModeSelect; // TnAMS PWM mode
-    RegisterField<R.GPTMTBMR, 2, 1> captureMode; // TnCMR edge count mode
-    RegisterField<R.GPTMTBMR, 0, 2> timerMode; // TnMR 2=periodic
+    RegisterBit<R.GPTMCTL, AB(0, 8)> enable; // TBEN
+    RegisterBit<R.GPTMCTL, AB(6, 14)> invertOutput; // TBPWML
 
-    Register32<R.GPTMTBILR> interval;
-    Register32<R.GPTMTBMATCHR> match;
-    Register32<R.GPTMTBPR> intervalPrescale;
-    Register32<R.GPTMTBPMR> matchPrescale;
+    RegisterField<AB(R.GPTMTAMR, R.GPTMTBMR), 3, 1> alternateModeSelect; // TnAMS PWM mode
+    RegisterField<AB(R.GPTMTAMR, R.GPTMTBMR), 2, 1> captureMode; // TnCMR edge count mode
+    RegisterField<AB(R.GPTMTAMR, R.GPTMTBMR), 0, 2> timerMode; // TnMR 2=periodic
 
-    RegisterBit<R.GPTMRIS, 8> timeoutRawInterrupt; //  TBTORIS
+    Register32<AB(R.GPTMTAILR, R.GPTMTBILR)> interval;
+    Register32<AB(R.GPTMTAMATCHR, R.GPTMTBMATCHR)> match;
+    Register32<AB(R.GPTMTAPR, R.GPTMTBPR)> intervalPrescale;
+    Register32<AB(R.GPTMTAPMR, R.GPTMTBPMR)> matchPrescale;
+
+    RegisterBit<R.GPTMRIS, AB(0, 8)> timeoutRawInterrupt; //  TBTORIS
 
 // 8=timeout, 11=match
-    RegisterBit<R.GPTMIMR, 8> timeoutInterruptMask;
-    RegisterBit<R.GPTMICR, 8> timeoutInterruptClear;
+    RegisterBit<R.GPTMIMR, AB(0, 8)> timeoutInterruptMask;
+    RegisterBit<R.GPTMICR, AB(0, 8)> timeoutInterruptClear;
 
-    RegisterBit<R.GPTMTBMR, 5> matchInterruptEnable; // TAMIE
-    RegisterBit<R.GPTMIMR, 9> pwmInterruptEnable; // TAPWMIE
+    RegisterBit<AB(R.GPTMTAMR, R.GPTMTBMR), 5> matchInterruptEnable; // TAMIE
+    // Capture Mode Match Interrupt Mask CAMIM
+    RegisterBit<R.GPTMIMR, AB(1, 9)> xpwmInterruptEnable; // TAPWMIE
 
     // map timer block index and timer index to interrupt number
     // 0A=19, 1A=21, 2A=23, 3A=35, 4A=70, 5A=92
@@ -80,15 +77,23 @@ struct Timer<timerBlockIndexEnum, TimerIndex::TimerB> : Register, RegisterAccess
     static constexpr uint32_t interruptNumber
         = (timerBlockIndex < 3 ? 19 + 2 * timerBlockIndex 
         : timerBlockIndex < 5 ? 35 + 35 * (timerBlockIndex - 3)
-        : 92) + static_cast<uint32_t>(TimerIndex::TimerB);
+        : 92) + static_cast<uint32_t>(timerIndex);
     Interrupt<interruptNumber> interrupt;
 };
 
+// PWM mode is a special case of the timer
 template<TimerBlockIndex timerBlockIndex, TimerIndex timerIndex>
 struct PWMTimer : Timer<timerBlockIndex, timerIndex>, Register {
     static constexpr TimerRegisters<timerBlockIndex> R{};
 
+    // AB(a, b) returns either a or b based on the timer index
+    template<typename T>
+    static constexpr T AB(T a, T b) {
+        return (timerIndex == TimerIndex::TimerA) ? a : b;
+    }
+
+
     // in PWM mode, prescaler is MSB of count
-    RegisterSpan<R.GPTMTBILR, 16, R.GPTMTBPR, 8> pwmInterval;
-    RegisterSpan<R.GPTMTBMATCHR, 16, R.GPTMTBPMR, 8> pwmMatch;
+    RegisterSpan<AB(R.GPTMTAILR, R.GPTMTBILR), 16, AB(R.GPTMTAPR, R.GPTMTBPR), 8> pwmInterval;
+    RegisterSpan<AB(R.GPTMTAMATCHR, R.GPTMTBMATCHR), 16, AB(R.GPTMTAPMR, R.GPTMTBPMR), 8> pwmMatch;
 };
