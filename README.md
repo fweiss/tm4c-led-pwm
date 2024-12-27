@@ -97,3 +97,5 @@ https://libopencm3.org/docs/latest/stm32l0/html/group__timer__file.html
 [User Manual with examples](https://www.ti.com/seclit/ml/ssqu015/ssqu015.pdf)
 
 [Modern C++ for embedded](https://www.youtube.com/watch?v=6pXhQ28FVlU&t=2897s)
+
+[A C++ version of CMSIS-Driver inspired by Embedded Template Library & libmetal](https://github.com/shishir-dey/cmsis-driver-cpp)
